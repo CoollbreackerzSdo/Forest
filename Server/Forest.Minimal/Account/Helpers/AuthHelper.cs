@@ -4,6 +4,6 @@ namespace Forest.Minimal.Account.Helpers;
 
 public sealed class AuthHelper
 {
-    public const string AuthenticationScheme = JwtBearerDefaults.AuthenticationScheme;
-    public const string AuthorizationDefaultPolicy = "default";
+    public const string DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    public const string DefaultPolicy = "default";
 }
