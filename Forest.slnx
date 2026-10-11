@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Env/">
+    <Project Path="Shared/RustfsClient/RustfsClient.csproj" />
+  </Folder>
+  <Folder Name="/Server/">
+    <Project Path="Server/Forest.Host/Forest.Host.csproj" />
+    <Project Path="Server/Forest.Minimal/Forest.Minimal.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/Forest.Communication/Forest.Communication.csproj" />
+    <Project Path="Shared/Forest.Host.Default/Forest.Host.Default.csproj" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Test/Forest.Test.csproj" />
+  </Folder>
+</Solution>

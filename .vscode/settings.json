@@ -1,0 +1,12 @@
+{
+  "dotnet.defaultSolution": "Forest.slnx",
+  "cSpell.words": [
+    "Ardalis",
+    "Hmac",
+    "Npgsql",
+    "postgres",
+    "rustfs",
+    "Rustfs"
+  ],
+  "cSpell.language": "en,es-ES"
+}

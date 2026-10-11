@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Forest.Minimal\Forest.Minimal.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>e48ce654-3a80-498a-b203-a4ad7ada038b</UserSecretsId>
+  </PropertyGroup>
+
+</Project>
