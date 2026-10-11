@@ -14,7 +14,7 @@ public sealed class BearerTransformer : IOpenApiDocumentTransformer
         var requirement = new OpenApiSecurityRequirement
         {
             {
-                new(AuthHelper.AuthenticationScheme,document)
+                new(AuthHelper.DefaultScheme,document)
                 {
                     Description = "Encabezado de autorización de JWT utilizando el esquema de portador.",
                     Reference = new()
@@ -26,12 +26,12 @@ public sealed class BearerTransformer : IOpenApiDocumentTransformer
             }
         };
         document.Security.Add(requirement);
-        document.Components.SecuritySchemes[AuthHelper.AuthenticationScheme] = new OpenApiSecurityScheme
+        document.Components.SecuritySchemes[AuthHelper.DefaultScheme] = new OpenApiSecurityScheme
         {
             Name = "Jwt Authentication",
             In = ParameterLocation.Header,
             Description = "Encabezado de autorización de JWT utilizando el esquema de portador.",
-            Scheme = AuthHelper.AuthenticationScheme,
+            Scheme = AuthHelper.DefaultScheme,
             Type = SecuritySchemeType.Http,
             BearerFormat = "JWT"
         };
