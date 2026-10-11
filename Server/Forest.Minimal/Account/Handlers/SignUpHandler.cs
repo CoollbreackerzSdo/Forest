@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Forest.Minimal.Account.Handlers;
 
-public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, Context context, IBearerGenerator generator) : IHandler<SignUpCommand, BearerTransport>
+public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignUpCommand, BearerTransport>
 {
     public async Task<Result<BearerTransport>> HandlerAsync(SignUpCommand request, CancellationToken token)
     {
