@@ -3,7 +3,7 @@ using Forest.Minimal.Account.Models;
 
 namespace Forest.Minimal;
 
-public sealed class Context(DbContextOptions options) : DbContext(options)
+public sealed class ForestContext(DbContextOptions options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
