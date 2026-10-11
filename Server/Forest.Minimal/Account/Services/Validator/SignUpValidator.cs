@@ -27,7 +27,7 @@ public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
         });
 
         var validImgFormat = configuration.GetValue<string[]>("ValidationConfiguration:FileTypes");
-        var maxFileSize = configuration.GetValue<long>("ValidationConfiguration:");
+        var maxFileSize = configuration.GetValue<long>("ValidationConfiguration:ValidFileMBSize", 20) * 1024 * 1024;
 
         RuleFor(x => x.Banner).Custom((value, context) =>
         {
