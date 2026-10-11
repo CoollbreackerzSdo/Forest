@@ -19,6 +19,8 @@ public static partial class UserMapper
     [MapperIgnoreSource(nameof(SignUpCommand.UserName))]
     [MapperIgnoreSource(nameof(SignUpCommand.Email))]
     [MapperIgnoreSource(nameof(SignUpCommand.Password))]
+    [MapperIgnoreTarget(nameof(Details.PhotoId))]
+    [MapperIgnoreTarget(nameof(Details.BannerId))]
     public static partial Details ToDetails(SignUpCommand command);
     [MapperIgnoreSource(nameof(SignUpCommand.Banner))]
     [MapperIgnoreSource(nameof(SignUpCommand.Photo))]
