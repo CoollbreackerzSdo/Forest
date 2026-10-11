@@ -10,6 +10,8 @@ using Forest.Minimal.Common.Endpoints.Middlewares;
 using Forest.Minimal.Common.Handlers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using RustfsClient;
+using RustfsClient.Options;
 
 namespace Forest.Minimal;
 
@@ -22,7 +24,7 @@ public static partial class Extensions
             builder.Configuration.AddEnvironmentVariables("BEARER_KEY");
             builder.Services.AddSingleton(new BearerConfiguration()
             {
-                HashKey = Environment.GetEnvironmentVariable("BEARER_KEY") ?? throw new ArgumentNullException("Variable de entorno {BEARER_KEY} no proporcionada"),
+                HashKey = Environment.GetEnvironmentVariable("BEARER_KEY") ?? string.Empty,
                 Audience = builder.Configuration.GetValue<string>("Parameters:BEARER_AUDIENCE") ?? string.Empty,
                 Issuer = builder.Configuration.GetValue<string>("Parameters:BEARER_ISSUE") ?? string.Empty,
                 Exp = builder.Configuration.GetValue<int>("Parameters:BEARER_EXP_DAYS"),
@@ -33,15 +35,33 @@ public static partial class Extensions
         }
         public IHostApplicationBuilder AddContext()
         {
-            builder.AddNpgsqlDbContext<Context>("forest-database", configureDbContextOptions: op => op.UseExceptionProcessor());
+            builder.AddNpgsqlDbContext<ForestContext>("forest-database", configureDbContextOptions: op => op.UseExceptionProcessor());
+            return builder;
+        }
+        public IHostApplicationBuilder AddObjectStorage()
+        {
+            builder.Services.AddRustfsClient(new RustfsClientOptions
+            {
+                ServiceUrl = builder.Configuration.GetValue<string>("RUSTFS_SERVICE_URL") ?? "http://localhost:5613",
+                AccessKey = builder.Configuration.GetValue<string>("RUSTFS_ACCESS_KEY") ?? string.Empty,
+                SecretKey = builder.Configuration.GetValue<string>("RUSTFS_SECRET_KEY") ?? string.Empty,
+                Region = builder.Configuration.GetValue<string>("RUSTFS_REGION", "us-east-1"),
+            });
             return builder;
         }
     }
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddValidators() => services.AddSingleton<IValidator<SignUpCommand>, SignUpValidator>();
-        public IServiceCollection AddHandlers() => services.AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>();
-        public IServiceCollection AddHash() => services.AddSingleton<IPasswordHasher<SignUpCommand>, PasswordHasher<SignUpCommand>>();
+        public IServiceCollection AddValidators() => services
+            .AddSingleton<IValidator<SignUpCommand>, SignUpValidator>()
+            .AddSingleton<IValidator<SignInCommand>, SignInValidator>();
+        public IServiceCollection AddHandlers() => services
+            .AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>()
+            .AddTransient<IHandler<SignInCommand, BearerTransport>, SignInHandler>()
+            .AddTransient<IHandler<ImageQuery, ImageResult>, ImageHandler>();
+        public IServiceCollection AddHash() => services
+            .AddSingleton<IPasswordHasher<SignUpCommand>, PasswordHasher<SignUpCommand>>()
+            .AddSingleton<IPasswordHasher<SignInCommand>, PasswordHasher<SignInCommand>>();
         public IServiceCollection AddEndpoints()
         {
             services.TryAddEnumerable(typeof(Program).Assembly.DefinedTypes
@@ -53,6 +73,7 @@ public static partial class Extensions
     }
     extension(WebApplication app)
     {
+        public async Task MigrateAsync() => await app.Services.CreateScope().ServiceProvider.GetRequiredService<ForestContext>().Database.MigrateAsync();
         public IEndpointRouteBuilder MapEndpoints()
         {
             foreach (var item in app.Services.GetRequiredService<IEnumerable<IEndpoint>>()) item.Map(app);
