@@ -1,5 +1,9 @@
 {
   "appHost": {
     "path": "Forest.Host.csproj"
-  }
+  },
+  "sdk": {
+    "version": "17.0.0-preview.1.26510.5"
+  },
+  "channel": "daily"
 }

@@ -1,7 +1,6 @@
 using EntityFramework.Exceptions.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Forest.Minimal.Common.Endpoints.Middlewares;
 
@@ -61,7 +60,6 @@ public sealed class ErrorMiddleware(ILogger<ErrorMiddleware> logger) : IMiddlewa
     {
         return exception switch
         {
-            ValidationException validationException => MapValidation(validationException),
             UniqueConstraintException => new(
                 StatusCodes.Status409Conflict,
                 "Conflicto de datos",
@@ -91,14 +89,6 @@ public sealed class ErrorMiddleware(ILogger<ErrorMiddleware> logger) : IMiddlewa
                 "Cafetera en problemas",
                 "Ocurrió un una sobrecarga inesperada al procesar tu cafe en la solicitud.")
         };
-    }
-
-    private static MappedError MapValidation(ValidationException exception)
-    {
-        var errors = exception.Errors.GroupBy(error => error.PropertyName)
-            .ToDictionary(group => group.Key, group => group.Select(error => error.ErrorMessage).Distinct().ToArray());
-
-        return new MappedError(StatusCodes.Status400BadRequest, "Solicitud inválida", "Uno o más campos no superaron la validación.", errors);
     }
 
     private sealed record MappedError(int StatusCode, string Title, string Detail, IReadOnlyDictionary<string, string[]>? Errors = null);

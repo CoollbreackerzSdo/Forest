@@ -9,7 +9,8 @@ builder.AddServiceDefaults()
 builder.Services.AddMiddlewares()
     .AddEndpoints()
     .AddHandlers()
-    .AddHash();
+    .AddHash()
+    .AddValidators();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

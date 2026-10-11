@@ -1,8 +1,10 @@
 using EntityFramework.Exceptions.PostgreSQL;
+using FluentValidation;
 using Forest.Minimal.Account.Handlers;
 using Forest.Minimal.Account.Services.Bearer;
 using Forest.Minimal.Account.Services.Bearer.Generator;
 using Forest.Minimal.Account.Services.Bearer.Models;
+using Forest.Minimal.Account.Services.Validator;
 using Forest.Minimal.Common.Endpoints.Abstractions;
 using Forest.Minimal.Common.Endpoints.Middlewares;
 using Forest.Minimal.Common.Handlers;
@@ -37,6 +39,7 @@ public static partial class Extensions
     }
     extension(IServiceCollection services)
     {
+        public IServiceCollection AddValidators() => services.AddSingleton<IValidator<SignUpCommand>, SignUpValidator>();
         public IServiceCollection AddHandlers() => services.AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>();
         public IServiceCollection AddHash() => services.AddSingleton<IPasswordHasher<SignUpCommand>, PasswordHasher<SignUpCommand>>();
         public IServiceCollection AddEndpoints()
