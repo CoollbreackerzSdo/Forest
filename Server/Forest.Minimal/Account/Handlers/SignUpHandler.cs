@@ -4,14 +4,21 @@ using Forest.Minimal.Account.Services.Bearer.Models;
 using Forest.Minimal.Common.Handlers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
+using RustfsClient.Abstractions;
 
 namespace Forest.Minimal.Account.Handlers;
 
-public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignUpCommand, BearerTransport>
+public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestContext context, IBearerGenerator generator, IRustfsObjectStorageClient storage) : IHandler<SignUpCommand, BearerTransport>
 {
+    private const string Bucket = "forest";
+
     public async Task<Result<BearerTransport>> HandlerAsync(SignUpCommand request, CancellationToken token)
     {
         var user = UserMapper.ToUserModel(request with { Password = hasher.HashPassword(request, request.Password) });
+
+        user.Details ??= new();
+        user.Details.PhotoId = request.Photo is null ? null : await UploadAsync(request.Photo, token);
+        user.Details.BannerId = request.Banner is null ? null : await UploadAsync(request.Banner, token);
 
         var bearerId = Guid.CreateVersion7();
         var refreshId = Guid.CreateVersion7();
@@ -34,6 +41,22 @@ public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestC
         await context.SaveChangesAsync(token);
 
         return data;
+    }
+
+    private async Task<string> UploadAsync(IFormFile file, CancellationToken token)
+    {
+        await storage.EnsureBucketAsync(Bucket, token);
+
+        await using var stream = new MemoryStream();
+        await using (var source = file.OpenReadStream())
+        {
+            await source.CopyToAsync(stream, token);
+        }
+        stream.Position = 0;
+
+        var key = $"{Guid.CreateVersion7()}{Path.GetExtension(file.FileName)}";
+        await storage.UploadAsync(Bucket, key, stream, file.ContentType, token);
+        return key;
     }
 }
 

@@ -14,10 +14,15 @@ public sealed class SignAuthEndpoint : IEndpoint
         var endp = builder.MapGroup("auth").WithTags("Auth");
 
         endp.MapPost("sign-up", SignUp)
-            .Accepts<SignUpCommand>("application/json")
+            .Accepts<SignUpCommand>("multipart/form-data")
             .AddEndpointFilter<ValidationFilter<SignUpCommand>>()
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces<BearerTransport>();
+
+        endp.MapPost("sign-in", SignIn)
+            .Accepts<SignInCommand>("application/json")
+            .AddEndpointFilter<ValidationFilter<SignInCommand>>()
+            .ProducesValidationProblem()
             .Produces<BearerTransport>();
 
         return endp;
@@ -27,5 +32,11 @@ public sealed class SignAuthEndpoint : IEndpoint
     {
         var result = await handler.HandlerAsync(command, token);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : TypedResults.NotFound();
+    }
+
+    private async Task<Results<Ok<BearerTransport>, UnauthorizedHttpResult>> SignIn(SignInCommand command, IHandler<SignInCommand, BearerTransport> handler, CancellationToken token)
+    {
+        var result = await handler.HandlerAsync(command, token);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : TypedResults.Unauthorized();
     }
 }
