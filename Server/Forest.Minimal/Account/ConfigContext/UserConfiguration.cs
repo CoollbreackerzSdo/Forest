@@ -27,18 +27,7 @@ public sealed class UserConfiguration : EntityTypeConfiguration<UserModel>
         builder.Property(user => user.IsEnable)
             .HasColumnName("is_enable");
 
-        builder.OwnsOne(user => user.Details, details =>
-        {
-            details.ToJson("details");
-
-            details.Property(value => value.FirstName)
-                .HasColumnName("first_name")
-                .HasMaxLength(100);
-
-            details.Property(value => value.LastName)
-                .HasColumnName("last_name")
-                .HasMaxLength(100);
-        });
+        builder.OwnsOne(user => user.Details, details => details.ToJson("details"));
 
         builder.OwnsOne(user => user.Security, security =>
         {
