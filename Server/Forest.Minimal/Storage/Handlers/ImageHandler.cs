@@ -1,8 +1,6 @@
 using Amazon.S3;
 using Forest.Communication.Models.Storage;
 using Forest.Minimal.Common.Handlers;
-using Forest.Minimal.Storage.Helpers;
-using Microsoft.AspNetCore.StaticFiles;
 using RustfsClient.Abstractions;
 
 namespace Forest.Minimal.Storage.Handlers;
