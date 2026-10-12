@@ -1,0 +1,27 @@
+{
+  // Use IntelliSense para saber los atributos posibles.
+  // Mantenga el puntero para ver las descripciones de los existentes atributos.
+  // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET MAUI",
+      "type": "maui",
+      "request": "launch",
+      "preLaunchTask": "maui: Build"
+    },
+    {
+      "type": "aspire",
+      "request": "launch",
+      "name": "Aspire: Iniciar apphost predeterminado",
+      "program": "${workspaceFolder}"
+    },
+    {
+      "type": "aspire",
+      "request": "launch",
+      "name": "Aspire: Launch default AppHost",
+      "program": "c:\\Users\\ralbe\\.projects\\dotnet\\aspire\\Forest",
+      "__aspireAppHostSelectionOrigin": "default-discovery"
+    }
+  ]
+}
