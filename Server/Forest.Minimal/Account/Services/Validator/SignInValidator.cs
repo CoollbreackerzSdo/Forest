@@ -3,7 +3,7 @@ using Forest.Minimal.Account.Handlers;
 
 namespace Forest.Minimal.Account.Services.Validator;
 
-public sealed class SignInValidator : AbstractValidator<SignInCommand>
+public sealed class SignInValidator : AbstractValidator<SignInRequest>
 {
     public SignInValidator()
     {
