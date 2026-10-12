@@ -109,6 +109,19 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
             cancellationToken);
     }
 
+    public async Task EnsureBucketAsync(string bucketName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _s3Client.PutBucketAsync(new PutBucketRequest { BucketName = bucketName }, cancellationToken);
+        }
+        catch (AmazonS3Exception exception) when (exception.ErrorCode is "BucketAlreadyOwnedByYou" or "BucketAlreadyExists"
+            || exception.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            // El bucket ya existe: la operación se considera exitosa.
+        }
+    }
+
     public void Dispose()
     {
         if (_ownsClient)
