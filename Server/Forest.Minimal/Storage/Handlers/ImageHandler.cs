@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Forest.Communication.Models.Storage;
 using Forest.Minimal.Common.Handlers;
+using Forest.Minimal.Storage.Helpers;
 using Microsoft.AspNetCore.StaticFiles;
 using RustfsClient.Abstractions;
 
@@ -27,10 +28,9 @@ public sealed class ImageHandler(IRustfsObjectStorageClient storage) : IHandler<
     }
     private static string GetContentType(string key)
     {
-        ContentTypes.TryGetContentType(key, out var contentType);
+        StorageHelper.ContentTypes.TryGetContentType(key, out var contentType);
         return contentType ?? "application/octet-stream";
     }
-    private static readonly FileExtensionContentTypeProvider ContentTypes = new();
 }
 
 public sealed record ImageQuery(string ImageId);
