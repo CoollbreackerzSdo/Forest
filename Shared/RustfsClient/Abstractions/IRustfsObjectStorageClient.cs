@@ -4,6 +4,10 @@ namespace RustfsClient.Abstractions;
 
 public interface IRustfsObjectStorageClient : IDisposable
 {
+    Task EnsureBucketAsync(
+        string bucketName,
+        CancellationToken cancellationToken = default);
+
     Task UploadAsync(
         string bucketName,
         string objectKey,
