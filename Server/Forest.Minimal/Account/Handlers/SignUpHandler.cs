@@ -10,15 +10,15 @@ namespace Forest.Minimal.Account.Handlers;
 
 public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestContext context, IBearerGenerator generator, IRustfsObjectStorageClient storage) : IHandler<SignUpCommand, BearerTransport>
 {
-    private const string Bucket = "forest";
-
     public async Task<Result<BearerTransport>> HandlerAsync(SignUpCommand request, CancellationToken token)
     {
         var user = UserMapper.ToUserModel(request with { Password = hasher.HashPassword(request, request.Password) });
 
-        user.Details ??= new();
-        user.Details.PhotoId = request.Photo is null ? null : await UploadAsync(request.Photo, token);
-        user.Details.BannerId = request.Banner is null ? null : await UploadAsync(request.Banner, token);
+        var saveImg = Task.Run(async () =>
+        {
+            user.Details?.PhotoId = request.Photo is null ? null : await storage.UploadAsync(request.Photo, token);
+            user.Details?.BannerId = request.Banner is null ? null : await storage.UploadAsync(request.Banner, token);
+        }, token);
 
         var bearerId = Guid.CreateVersion7();
         var refreshId = Guid.CreateVersion7();
@@ -38,26 +38,18 @@ public sealed class SignUpHandler(IPasswordHasher<SignUpCommand> hasher, ForestC
 
         context.Tokens.Add(new(bearerId, refreshId, data.Exp, data.RefreshExp, user.Key));
 
+        await saveImg;
+
         await context.SaveChangesAsync(token);
 
         return data;
     }
-
-    private async Task<string> UploadAsync(IFormFile file, CancellationToken token)
-    {
-        await storage.EnsureBucketAsync(Bucket, token);
-
-        await using var stream = new MemoryStream();
-        await using (var source = file.OpenReadStream())
-        {
-            await source.CopyToAsync(stream, token);
-        }
-        stream.Position = 0;
-
-        var key = $"{Guid.CreateVersion7()}{Path.GetExtension(file.FileName)}";
-        await storage.UploadAsync(Bucket, key, stream, file.ContentType, token);
-        return key;
-    }
 }
 
-public sealed record SignUpCommand(string UserName, string Email, string Password, IFormFile? Photo = null, IFormFile? Banner = null, string? FirstName = null, string? LastName = null);
+public sealed record SignUpCommand(string Email, string UserName, string Password)
+{
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public IFormFile? Photo { get; set; }
+    public IFormFile? Banner { get; set; }
+}
