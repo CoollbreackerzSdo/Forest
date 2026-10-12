@@ -2,6 +2,7 @@
   "dotnet.defaultSolution": "Forest.slnx",
   "cSpell.words": [
     "Ardalis",
+    "endp",
     "Hmac",
     "Npgsql",
     "postgres",
