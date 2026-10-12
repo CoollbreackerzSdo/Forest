@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Forest.Communication\Forest.Communication.csproj" />
     <ProjectReference Include="..\..\Shared\Forest.Host.Default\Forest.Host.Default.csproj" />
+    <ProjectReference Include="..\..\Shared\RustfsClient\RustfsClient.csproj" />
   </ItemGroup>
 
 </Project>
