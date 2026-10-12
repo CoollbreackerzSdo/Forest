@@ -113,5 +113,6 @@ public static partial class Extensions
             await client.UploadAsync(StorageHelper.BucketName, key, stream, file.ContentType, token);
             return key;
         }
+        public async Task DeleteAsync(string id, CancellationToken token) => await client.DeleteAsync(StorageHelper.BucketName, id, token);
     }
 }
