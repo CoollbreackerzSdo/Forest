@@ -11,7 +11,7 @@ public static partial class Extensions
         {
             var resource = new RustfsResource(name);
             return builder.AddResource(resource)
-                .WithImage(ContainerImageTags.Image)   
+                .WithImage(ContainerImageTags.Image)
                 .WithImageRegistry(ContainerImageTags.Registry)
                 .WithImageTag(ContainerImageTags.Tag)
                 .WithHttpEndpoint(name: resource.HttpEndpoint.EndpointName, port: port, targetPort: 9000)
