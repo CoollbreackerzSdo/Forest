@@ -1,15 +1,20 @@
 using FluentValidation;
 using Forest.Minimal.Account.Handlers;
+using Forest.Minimal.Common.Services.Validation;
+using Microsoft.Extensions.Options;
 
 namespace Forest.Minimal.Account.Services.Validator;
 
 public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
 {
-    public SignUpValidator(IConfiguration configuration)
+    public SignUpValidator(IOptionsMonitor<ValidationConfiguration> configuration)
     {
         RuleFor(x => x.UserName)
             .NotEmpty()
             .MaximumLength(50);
+
+        RuleFor(x => x.Email)
+            .EmailAddress();
 
         RuleFor(x => x.Password)
             .Matches(@"^(?=(?:\S*?[A-Z]){2})(?=\S*?[a-z])(?=\S*?[0-9]).{8,}\S$");
@@ -26,8 +31,7 @@ public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
                 context.AddFailure("Segundo nombre demasiado largo");
         });
 
-        var validImgFormat = configuration.GetValue<string[]>("ValidationConfiguration:FileTypes");
-        var maxFileSize = configuration.GetValue<long>("ValidationConfiguration:ValidFileMBSize", 20) * 1024 * 1024;
+        var maxFileSize = configuration.CurrentValue.ValidFileMBSize * 1024 * 1024;
 
         RuleFor(x => x.Banner).Custom((value, context) =>
         {
@@ -43,6 +47,6 @@ public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
                 context.AddFailure("Archivo no valido");
         });
 
-        bool ValidateFileExtension(string extension) => validImgFormat.Contains(extension);
+        bool ValidateFileExtension(string extension) => configuration.CurrentValue.FileTypes.Contains(extension);
     }
 }
