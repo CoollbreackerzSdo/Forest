@@ -31,9 +31,11 @@ var api = builder.AddProject<Projects.Forest_Minimal>("forest-server")
     .WithEnvironment("RUSTFS_SERVICE_URL", "http://localhost:5613")
     .WithEnvironment("RUSTFS_REGION", "us-east-1")
     .WithReference(cache)
+    .WithReference(rustfs)
     .WithReference(database)
     .WaitFor(cache)
     .WaitFor(database)
+    .WaitFor(rustfs)
     .WithHttpEndpoint(5620)
     .WithHttpsEndpoint(5621);
 
