@@ -6,9 +6,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Forest.Minimal.Account.Handlers;
 
-public sealed class SignInHandler(IPasswordHasher<SignInCommand> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignInCommand, BearerTransport>
+public sealed class SignInHandler(IPasswordHasher<SignInRequest> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignInRequest, BearerTransport>
 {
-    public async Task<Result<BearerTransport>> HandlerAsync(SignInCommand request, CancellationToken token)
+    public async Task<Result<BearerTransport>> HandlerAsync(SignInRequest request, CancellationToken token)
     {
         var user = await (
             from x in context.Users
@@ -41,4 +41,4 @@ public sealed class SignInHandler(IPasswordHasher<SignInCommand> hasher, ForestC
     }
 }
 
-public sealed record SignInCommand(string EmailOrUserName, string Password);
+public sealed record SignInRequest(string EmailOrUserName, string Password);
