@@ -31,22 +31,18 @@ public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
                 context.AddFailure("Segundo nombre demasiado largo");
         });
 
-        var maxFileSize = configuration.CurrentValue.ValidFileMBSize * 1024 * 1024;
-
         RuleFor(x => x.Banner).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!ValidateFileExtension(Path.GetExtension(value.FileName)) || value.Length > maxFileSize)
+            if (!configuration.CurrentValue.ValidateFile(Path.GetExtension(value.FileName)) || value.Length > configuration.CurrentValue.ValidFileMBSize)
                 context.AddFailure("Archivo no valido");
         });
 
         RuleFor(x => x.Photo).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!ValidateFileExtension(Path.GetExtension(value.FileName)) || value.Length > maxFileSize)
+            if (!configuration.CurrentValue.ValidateFile(Path.GetExtension(value.FileName)) || value.Length > configuration.CurrentValue.ValidFileMBSize)
                 context.AddFailure("Archivo no valido");
         });
-
-        bool ValidateFileExtension(string extension) => configuration.CurrentValue.FileTypes.Contains(extension);
     }
 }
