@@ -5,5 +5,5 @@ namespace Forest.Minimal.Account.Services.Bearer.Generator;
 
 public interface IBearerGenerator
 {
-    Task<BearerTransport> GenerateAsync(IEnumerable<Claim> claims, IEnumerable<Claim>? refreshClaims = null, CancellationToken token = default);
+    Task<BearerTransport> GenerateAsync(IDictionary<string, object> claims, IDictionary<string, object> refreshClaims, CancellationToken token = default);
 }
