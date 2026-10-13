@@ -9,9 +9,6 @@ namespace RustfsClient.Clients;
 
 public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
 {
-    private readonly IAmazonS3 _s3Client;
-    private readonly bool _ownsClient;
-
     public RustfsObjectStorageClient(RustfsClientOptions options)
         : this(CreateS3Client(options), ownsClient: true)
     {
@@ -28,35 +25,7 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
         _ownsClient = ownsClient;
     }
 
-    public async Task UploadAsync(
-        string bucketName,
-        string objectKey,
-        Stream content,
-        string? contentType = null,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(content);
-
-        var request = new PutObjectRequest
-        {
-            BucketName = bucketName,
-            Key = objectKey,
-            InputStream = content
-        };
-
-        if (!string.IsNullOrWhiteSpace(contentType))
-        {
-            request.ContentType = contentType;
-        }
-
-        await _s3Client.PutObjectAsync(request, cancellationToken);
-    }
-
-    public async Task DownloadAsync(
-        string bucketName,
-        string objectKey,
-        Stream destination,
-        CancellationToken cancellationToken = default)
+    public async Task DownloadAsync(string bucketName, string objectKey, Stream destination, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(destination);
 
@@ -67,10 +36,7 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
         await response.ResponseStream.CopyToAsync(destination, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<RustfsObjectInfo>> ListObjectsAsync(
-        string bucketName,
-        string? prefix = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RustfsObjectInfo>> ListObjectsAsync(string bucketName, string? prefix = null, CancellationToken cancellationToken = default)
     {
         var objects = new List<RustfsObjectInfo>();
         string? continuationToken = null;
@@ -95,14 +61,11 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
             continuationToken = response.IsTruncated ?? false ? response.NextContinuationToken : null;
         }
         while (continuationToken is not null);
-
+        
         return objects;
     }
 
-    public Task DeleteAsync(
-        string bucketName,
-        string objectKey,
-        CancellationToken cancellationToken = default)
+    public Task DeleteAsync(string bucketName, string objectKey, CancellationToken cancellationToken = default)
     {
         return _s3Client.DeleteObjectAsync(
             new DeleteObjectRequest { BucketName = bucketName, Key = objectKey },
@@ -166,4 +129,30 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
             new BasicAWSCredentials(options.AccessKey, options.SecretKey),
             configuration);
     }
+
+    public async Task UploadAsync(string bucketName, string objectKey, Stream content, string? contentType = null, long? contentLength = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bucketName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectKey);
+
+        var request = new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = objectKey,
+            InputStream = content,
+            AutoCloseStream = false,
+            ContentType = contentType ?? "application/octet-stream"
+        };
+
+        if (contentLength.HasValue)
+            request.Headers.ContentLength = contentLength.Value;
+        else if (content.CanSeek)
+            request.Headers.ContentLength = content.Length;
+
+        await _s3Client.PutObjectAsync(request, cancellationToken);
+    }
+
+    private readonly IAmazonS3 _s3Client;
+    private readonly bool _ownsClient;
 }
