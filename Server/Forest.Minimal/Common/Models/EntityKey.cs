@@ -5,7 +5,7 @@ public record struct EntityKey<T>(T Value) : IComparable<EntityKey<T>>
 {
     public override readonly string? ToString() => Value.ToString();
     public readonly int CompareTo(EntityKey<T> other) => Value.CompareTo(other.Value);
-    public readonly T Value = Value;
+    public T Value { get; init; } = Value;
     public static implicit operator T(EntityKey<T> value) => value.Value;
     public static implicit operator EntityKey<T>(T value) => new(value);
 }
