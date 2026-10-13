@@ -1,8 +1,12 @@
+using System.Text;
+using System.Threading.Channels;
 using EntityFramework.Exceptions.PostgreSQL;
 using FluentValidation;
 using Forest.Communication.Models.Storage;
 using Forest.Minimal.Account.Handlers;
+using Forest.Minimal.Account.Models;
 using Forest.Minimal.Account.Services.Bearer;
+using Forest.Minimal.Account.Services.Bearer.Events;
 using Forest.Minimal.Account.Services.Bearer.Generator;
 using Forest.Minimal.Account.Services.Bearer.Models;
 using Forest.Minimal.Account.Services.Validator;
@@ -14,6 +18,7 @@ using Forest.Minimal.Storage.Handlers;
 using Forest.Minimal.Storage.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.IdentityModel.Tokens;
 using RustfsClient;
 using RustfsClient.Abstractions;
 using RustfsClient.Options;
@@ -35,12 +40,42 @@ public static partial class Extensions
             builder.Services.AddSingleton(new BearerConfiguration()
             {
                 HashKey = Environment.GetEnvironmentVariable("BEARER_KEY") ?? string.Empty,
-                Audience = builder.Configuration.GetValue<string>("Parameters:BEARER_AUDIENCE")!,
-                Issuer = builder.Configuration.GetValue<string>("Parameters:BEARER_ISSUE")!,
+                Audience = builder.Configuration["Parameters:BEARER_AUDIENCE"]!,
+                Issuer = builder.Configuration["Parameters:BEARER_ISSUE"]!,
                 Exp = builder.Configuration.GetValue<int>("Parameters:BEARER_EXP_DAYS"),
                 RefreshExp = builder.Configuration.GetValue<int>("Parameters:BEARER_REFRESH_EXP_DAYS"),
             });
             builder.Services.AddSingleton<IBearerGenerator, BearerGenerator>();
+            return builder;
+        }
+        public IHostApplicationBuilder AddAuth()
+        {
+            builder.Services.AddAuthentication(op =>
+            {
+                op.DefaultScheme = AuthHelper.DefaultScheme;
+                op.DefaultAuthenticateScheme = AuthHelper.DefaultScheme;
+                op.DefaultChallengeScheme = AuthHelper.DefaultScheme;
+            }).AddJwtBearer(AuthHelper.DefaultScheme, op =>
+            {
+                op.MapInboundClaims = false;
+                op.TokenValidationParameters = new()
+                {
+                    ValidateAudience = true,
+                    ValidateIssuer = true,
+                    ValidateActor = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidAudience = builder.Configuration["Parameters:BEARER_AUDIENCE"],
+                    ValidIssuer = builder.Configuration["Parameters:BEARER_ISSUE"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("BEARER_KEY") ?? string.Empty))
+                };
+                op.Events = new()
+                {
+                    OnMessageReceived = MapCookieEvent.OnMessageReceived
+                };
+            });
+            builder.Services.AddAuthorizationBuilder()
+                .AddDefaultPolicy(AuthHelper.DefaultPolicy, op => op.AddAuthenticationSchemes(AuthHelper.DefaultScheme).RequireAuthenticatedUser());
             return builder;
         }
         public IHostApplicationBuilder AddContext()
@@ -67,16 +102,19 @@ public static partial class Extensions
     }
     extension(IServiceCollection services)
     {
+        public IServiceCollection AddChannels() => services
+            .AddKeyedSingleton<Channel<string?>>("img-cleaner");
         public IServiceCollection AddValidators() => services
             .AddSingleton<IValidator<SignUpCommand>, SignUpValidator>()
-            .AddSingleton<IValidator<SignInRequest>, SignInValidator>();
+            .AddSingleton<IValidator<SignInRequest>, SignInValidator>()
+            .AddSingleton<IValidator<UpdateUserRequest>, UpdateUserValidator>();
         public IServiceCollection AddHandlers() => services
             .AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>()
             .AddTransient<IHandler<SignInRequest, BearerTransport>, SignInHandler>()
-            .AddTransient<IHandler<ImageQuery, ImageResult>, ImageHandler>();
+            .AddTransient<IHandler<ImageQuery, ImageResult>, ImageHandler>()
+            .AddTransient<IRequestHandler<UpdateUserQuery>, UpdateUserHandler>();
         public IServiceCollection AddHash() => services
-            .AddSingleton<IPasswordHasher<SignUpCommand>, PasswordHasher<SignUpCommand>>()
-            .AddSingleton<IPasswordHasher<SignInRequest>, PasswordHasher<SignInRequest>>();
+            .AddSingleton<IPasswordHasher<UserModel>, PasswordHasher<UserModel>>();
         public IServiceCollection AddEndpoints()
         {
             services.TryAddEnumerable(typeof(Program).Assembly.DefinedTypes
@@ -88,7 +126,8 @@ public static partial class Extensions
     }
     extension(WebApplication app)
     {
-        public async Task MigrateAsync() => await app.Services.CreateScope().ServiceProvider.GetRequiredService<ForestContext>().Database.MigrateAsync();
+        public async Task LoadBucketAsync(CancellationToken token = default) => await app.Services.CreateScope().ServiceProvider.GetRequiredService<IRustfsObjectStorageClient>().EnsureBucketAsync(StorageHelper.BucketName, token);
+        public async Task MigrateAsync(CancellationToken token = default) => await app.Services.CreateScope().ServiceProvider.GetRequiredService<ForestContext>().Database.MigrateAsync(token);
         public IEndpointRouteBuilder MapEndpoints()
         {
             foreach (var item in app.Services.GetRequiredService<IEnumerable<IEndpoint>>()) item.Map(app);
@@ -100,19 +139,20 @@ public static partial class Extensions
     {
         public async Task<string> UploadAsync(IFormFile file, CancellationToken token)
         {
-            await client.EnsureBucketAsync(StorageHelper.BucketName, token);
-
-            await using var stream = new MemoryStream();
-            await using (var source = file.OpenReadStream())
-            {
-                await source.CopyToAsync(stream, token);
-            }
-            stream.Position = 0;
-
+            await using var source = file.OpenReadStream();
             var key = $"{Guid.CreateVersion7()}{Path.GetExtension(file.FileName)}";
-            await client.UploadAsync(StorageHelper.BucketName, key, stream, file.ContentType, token);
+            await client.UploadAsync(StorageHelper.BucketName, key, source, file.ContentType, file.Length, token);
             return key;
         }
-        public async Task DeleteAsync(string id, CancellationToken token) => await client.DeleteAsync(StorageHelper.BucketName, id, token);
+        public async Task UpdateAsync(string key, IFormFile file, CancellationToken token)
+        {
+            await using var source = file.OpenReadStream();
+            await client.UploadAsync(StorageHelper.BucketName, key, source, file.ContentType, file.Length, token);
+        }
+        public async Task DeleteAsync(string key, CancellationToken token) => await client.DeleteAsync(StorageHelper.BucketName, key, token);
+    }
+    extension(ValidationConfiguration configuration)
+    {
+        public bool ValidateFile(string extension) => configuration.FileTypes.Contains(extension);
     }
 }

@@ -8,7 +8,8 @@ builder.AddServiceDefaults()
     .AddValidationConfiguration()
     .AddBearer()
     .AddObjectStorage()
-    .AddContext();
+    .AddContext()
+    .AddAuth();
 
 builder.Services.AddMiddlewares()
     .AddEndpoints()
@@ -18,12 +19,15 @@ builder.Services.AddMiddlewares()
 
 var app = builder.Build();
 _ = app.MigrateAsync();
+_ = app.LoadBucketAsync();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference("/", op => op.WithTheme(ScalarTheme.BluePlanet));
 }
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapMiddleware();
 app.MapGet("health/check", () => TypedResults.Ok());
 app.MapEndpoints();
