@@ -2,7 +2,7 @@
   <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
   <PropertyGroup>
     <GenerateImplicitNamespacesDeclaration>false</GenerateImplicitNamespacesDeclaration>
-    <Deterministic>true</Deterministic>
+    <Deterministic>false</Deterministic>
     <HotReloadAutoRestart>true</HotReloadAutoRestart>
   </PropertyGroup>
 </Project>
