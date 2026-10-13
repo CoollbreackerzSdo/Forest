@@ -1,3 +1,4 @@
+using Forest.Minimal.Account.Models;
 using Forest.Minimal.Account.Services.Bearer.Generator;
 using Forest.Minimal.Account.Services.Bearer.Models;
 using Forest.Minimal.Common.Handlers;
@@ -6,7 +7,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Forest.Minimal.Account.Handlers;
 
-public sealed class SignInHandler(IPasswordHasher<SignInRequest> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignInRequest, BearerTransport>
+public sealed class SignInHandler(IPasswordHasher<UserModel> hasher, ForestContext context, IBearerGenerator generator) : IHandler<SignInRequest, BearerTransport>
 {
     public async Task<Result<BearerTransport>> HandlerAsync(SignInRequest request, CancellationToken token)
     {
@@ -16,20 +17,22 @@ public sealed class SignInHandler(IPasswordHasher<SignInRequest> hasher, ForestC
             select new { x.UserName, x.Key, x.Security.Email, x.Security.Password }
         ).FirstOrDefaultAsync(token);
 
-        if (user is null) return Result.Unauthorized();
+        if (user is null) return Result.NoContent();
         var bearerId = Guid.CreateVersion7();
         var refreshId = Guid.CreateVersion7();
 
-        var bearer = generator.GenerateAsync([
-            new(JwtRegisteredClaimNames.Jti, bearerId.ToString()),
-            new(JwtRegisteredClaimNames.Sub, user.Key.ToString()!),
-            new(JwtRegisteredClaimNames.Email, user.Email),
-            new(JwtRegisteredClaimNames.UniqueName, user.UserName)
-        ], [
-            new(JwtRegisteredClaimNames.Jti, refreshId.ToString())
-        ], token);
+        var bearer = generator.GenerateAsync(new Dictionary<string, object>()
+        {
+            { JwtRegisteredClaimNames.Jti , bearerId.ToString() },
+            { JwtRegisteredClaimNames.Sub, user.Key.ToString()! },
+            { JwtRegisteredClaimNames.Email, user.Email},
+            { JwtRegisteredClaimNames.UniqueName, user.UserName }
+        }, new Dictionary<string, object>()
+        {
+            { JwtRegisteredClaimNames.Jti, refreshId.ToString() }
+        }, token);
 
-        if (hasher.VerifyHashedPassword(request, user.Password, request.Password) == PasswordVerificationResult.Failed) return Result.Unauthorized();
+        if (hasher.VerifyHashedPassword(default!, user.Password, request.Password) == PasswordVerificationResult.Failed) return Result.Unauthorized();
 
         var data = await bearer;
 
