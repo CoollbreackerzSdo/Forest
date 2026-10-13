@@ -6,7 +6,9 @@ public sealed class ValidationFilter<T>(IValidator<T> validator) : IEndpointFilt
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var result = validator.Validate(context.GetArgument<T>(0));
+        var value = context.GetArgument<T>(0);
+        if (value is null) return TypedResults.BadRequest();
+        var result = validator.Validate(value);
         return result.IsValid ? await next(context) : TypedResults.ValidationProblem(result.ToDictionary());
     }
 }
