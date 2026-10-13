@@ -24,8 +24,8 @@ public sealed class ErrorMiddleware(ILogger<ErrorMiddleware> logger) : IMiddlewa
                 throw;
             }
 
-            var error = Map(exception);
-            if (error.StatusCode >= StatusCodes.Status500InternalServerError)
+            var problem = Map(exception);
+            if (problem.Status >= StatusCodes.Status500InternalServerError)
             {
                 logger.LogError(exception, "Error no controlado en la solicitud {TraceId}.", context.TraceIdentifier);
             }
@@ -34,62 +34,66 @@ public sealed class ErrorMiddleware(ILogger<ErrorMiddleware> logger) : IMiddlewa
                 logger.LogWarning(exception, "Error controlado en la solicitud {TraceId}.", context.TraceIdentifier);
             }
 
-            context.Response.StatusCode = error.StatusCode;
+            context.Response.StatusCode = (int)problem?.Status!;
             context.Response.ContentType = "application/problem+json";
-
-            var problem = new ProblemDetails
-            {
-                Status = error.StatusCode,
-                Title = error.Title,
-                Detail = error.Detail,
-                Instance = context.Request.Path
-            };
-
             problem.Extensions["traceId"] = context.TraceIdentifier;
-
-            if (error.Errors is not null)
-            {
-                problem.Extensions["errors"] = error.Errors;
-            }
 
             await context.Response.WriteAsJsonAsync(problem);
         }
     }
 
-    private static MappedError Map(Exception exception)
+    private static ProblemDetails Map(Exception exception)
     {
         return exception switch
         {
-            UniqueConstraintException => new(
-                StatusCodes.Status409Conflict,
-                "Conflicto de datos",
-                "Ya existe un registro con esos datos."),
-            ReferenceConstraintException => new(
-                StatusCodes.Status409Conflict,
-                "Conflicto de referencias",
-                "La operación entra en conflicto con registros relacionados."),
-            CannotInsertNullException => new(
-                StatusCodes.Status400BadRequest,
-                "Dato obligatorio",
-                "Falta un valor obligatorio para completar la operación."),
-            MaxLengthExceededException => new(
-                StatusCodes.Status400BadRequest,
-                "Longitud excedida",
-                "Uno o más valores superan la longitud permitida."),
-            NumericOverflowException => new(
-                StatusCodes.Status400BadRequest,
-                "Valor numérico inválido",
-                Detail: "Uno o más valores numéricos están fuera del rango permitido."),
-            DbUpdateConcurrencyException => new(
-                StatusCodes.Status409Conflict,
-                "Conflicto de concurrencia",
-                "El registro cambió desde que se consultó. Actualiza los datos e inténtalo de nuevo."),
-            _ => new(
-                StatusCodes.Status418ImATeapot,
-                "Cafetera en problemas",
-                "Ocurrió un una sobrecarga inesperada al procesar tu cafe en la solicitud.")
+            UniqueConstraintException => new()
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflicto de datos",
+                Detail = "Ya existe un registro con esos datos."
+            },
+            ReferenceConstraintException => new()
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflicto de referencias",
+                Detail = "La operación entra en conflicto con registros relacionados."
+            },
+            CannotInsertNullException => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Dato obligatorio",
+                Detail = "Falta un valor obligatorio para completar la operación."
+            },
+            MaxLengthExceededException => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Longitud excedida",
+                Detail = "Uno o más valores superan la longitud permitida."
+            },
+            NumericOverflowException => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Valor numérico inválido",
+                Detail = "Uno o más valores numéricos están fuera del rango permitido."
+            },
+            DbUpdateConcurrencyException => new()
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflicto de concurrencia",
+                Detail = "El registro cambió desde que se consultó. Actualiza los datos e inténtalo de nuevo.",
+            },
+            BadHttpRequestException => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Cuerpo de la solicitud sin definir",
+                Detail = "El formato del cuerpo de la solicitud no esta definido",
+            },
+            _ => new()
+            {
+                Status = StatusCodes.Status418ImATeapot,
+                Title = "Cafetera en problemas",
+                Detail = "Ocurrió un una sobrecarga inesperada al procesar tu cafe en la solicitud."
+            }
         };
     }
-
-    private sealed record MappedError(int StatusCode, string Title, string Detail, IReadOnlyDictionary<string, string[]>? Errors = null);
 }
