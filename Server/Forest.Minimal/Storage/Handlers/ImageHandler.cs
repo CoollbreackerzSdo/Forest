@@ -9,20 +9,16 @@ public sealed class ImageHandler(IRustfsObjectStorageClient storage) : IHandler<
 {
     public async Task<Result<ImageResult>> HandlerAsync(ImageQuery request, CancellationToken token)
     {
-        var content = new MemoryStream();
-
         try
         {
+            var content = new MemoryStream();
             await storage.DownloadAsync(StorageHelper.BucketName, request.ImageId, content, token);
-            if (content.Length == 0) return Result.NotFound();
+            return new ImageResult(content, GetContentType(request.ImageId));
         }
         catch (AmazonS3Exception exception) when (exception.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return Result.NotFound();
         }
-
-        content.Position = 0;
-        return new ImageResult(content, GetContentType(request.ImageId));
     }
     private static string GetContentType(string key)
     {
