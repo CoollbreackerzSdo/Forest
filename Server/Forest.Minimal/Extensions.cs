@@ -153,6 +153,6 @@ public static partial class Extensions
     }
     extension(ValidationConfiguration configuration)
     {
-        public bool ValidateFile(string extension) => configuration.FileTypes.Contains(extension);
+        public bool ValidateFile(IFormFile file) => configuration.FileTypes.Contains(Path.GetExtension(file.FileName));
     }
 }

@@ -16,10 +16,8 @@ public sealed class UpdateImgRequestValidation : AbstractValidator<UploadImgRequ
         RuleFor(x => x.NewImg).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!ValidateFileExtension(Path.GetExtension(value.FileName)) || value.Length > maxFileSize)
+            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > maxFileSize)
                 context.AddFailure("Archivo no valido");
         });
-
-        bool ValidateFileExtension(string extension) => configuration.CurrentValue.FileTypes.Contains(extension);
     }
 }
