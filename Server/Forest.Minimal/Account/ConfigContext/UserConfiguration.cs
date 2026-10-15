@@ -12,7 +12,8 @@ public sealed class UserConfiguration : EntityTypeConfiguration<UserModel>
 
         base.Configure(builder);
 
-        builder.HasAlternateKey(x => x.UserName);
+        builder.HasIndex(x => x.UserName)
+            .IsUnique();
 
         builder.Property(user => user.UserName)
             .HasColumnName("user_name")
@@ -27,7 +28,22 @@ public sealed class UserConfiguration : EntityTypeConfiguration<UserModel>
         builder.Property(user => user.IsEnable)
             .HasColumnName("is_enable");
 
-        builder.OwnsOne(user => user.Details, details => details.ToJson("details"));
+        builder.OwnsOne(user => user.Details, details =>
+        {
+            details.ToTable("user_details");
+
+            details.Property(x => x.BannerId)
+                .HasColumnName("banner_id");
+
+            details.Property(x => x.PhotoId)
+            .HasColumnName("photo_id");
+
+            details.Property(x => x.FirstName)
+            .HasColumnName("first_name");
+
+            details.Property(x => x.LastName)
+            .HasColumnName("last_name");
+        });
 
         builder.OwnsOne(user => user.Security, security =>
         {
