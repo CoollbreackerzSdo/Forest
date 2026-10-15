@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using EntityFramework.Exceptions.Common;
 using Forest.Minimal.Account.Models;
@@ -131,13 +132,53 @@ public sealed class ProblemTests
         await new Problem(StatusCodes.Status409Conflict, "Conflicto de datos", "Ya existe un registro con esos datos.", new[] { "email" }).ExecuteAsync(context);
 
         Assert.Equal(StatusCodes.Status409Conflict, context.Response.StatusCode);
-        Assert.Equal("application/problem+json", context.Response.ContentType);
+        Assert.Equal(Problem.ContentType, context.Response.ContentType);
 
         context.Response.Body.Position = 0;
         using var document = await JsonDocument.ParseAsync(context.Response.Body);
         Assert.Equal(409, document.RootElement.GetProperty("status").GetInt32());
         Assert.Equal("Conflicto de datos", document.RootElement.GetProperty("title").GetString());
         Assert.Equal("email", document.RootElement.GetProperty("fields")[0].GetString());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_DeberiaDeclararElCharsetUtf8()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        await new Problem(StatusCodes.Status404NotFound, "Imagen no encontrada", "No existe una imagen con ese identificador.").ExecuteAsync(context);
+
+        Assert.Equal("application/problem+json; charset=utf-8", context.Response.ContentType);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_NoDeberiaEscaparLosCaracteresAcentuados()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+        var problem = new Problem(StatusCodes.Status400BadRequest, "Valor numérico inválido", "La contraseña contiene un símbolo · ñ", Errors: new Dictionary<string, string[]> { ["Email"] = ["'Email' no es válida"] });
+
+        await problem.ExecuteAsync(context);
+
+        var json = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
+        Assert.Contains("Valor numérico inválido", json);
+        Assert.Contains("La contraseña contiene un símbolo · ñ", json);
+        Assert.Contains("'Email' no es válida", json);
+        Assert.DoesNotContain("\\u", json);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_DeberiaEscribirLosBytesEnUtf8()
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        await new Problem(StatusCodes.Status400BadRequest, "Título", "Detalle con ñ").ExecuteAsync(context);
+
+        // "ñ" son los bytes C3 B1 en UTF-8; en otra codificacion serian otros.
+        var bytes = ((MemoryStream)context.Response.Body).ToArray();
+        Assert.Contains("\u00F1", Encoding.UTF8.GetString(bytes));
     }
 
     [Fact]
