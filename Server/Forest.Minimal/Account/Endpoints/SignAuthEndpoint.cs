@@ -6,6 +6,7 @@ using Forest.Minimal.Common.Endpoints.Filters;
 using Forest.Minimal.Common.Handlers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Forest.Minimal.Account.Endpoints;
 
@@ -18,22 +19,59 @@ public sealed class SignAuthEndpoint : IEndpoint
         endp.MapPost("sign-up", SignUp)
             .Accepts<SignUpCommand>("multipart/form-data")
             .AddEndpointFilter<ValidationFilter<SignUpCommand>>()
-            .Produces<BearerTransport>();
+            .Produces<BearerTransport>()
+            .Produces<Problem>(StatusCodes.Status400BadRequest, Problem.ContentType)
+            .Produces<Problem>(StatusCodes.Status409Conflict, Problem.ContentType);
 
         endp.MapPost("sign-in", SignIn)
             .Accepts<SignInRequest>("application/json")
             .AddEndpointFilter<ValidationFilter<SignInRequest>>()
-            .Produces<BearerTransport>();
+            .Produces<BearerTransport>()
+            .Produces<Problem>(StatusCodes.Status400BadRequest, Problem.ContentType)
+            .Produces<Problem>(StatusCodes.Status404NotFound, Problem.ContentType);
 
         endp.MapPost("sign-up-web", SignUpWeb)
             .Accepts<SignUpCommand>("multipart/form-data")
             .AddEndpointFilter<ValidationFilter<SignUpCommand>>()
+            .Produces(StatusCodes.Status200OK)
+            .Produces<Problem>(StatusCodes.Status400BadRequest, Problem.ContentType)
+            .Produces<Problem>(StatusCodes.Status409Conflict, Problem.ContentType);
+
+        endp.MapGet("sign-out-web", SignOutWeb)
+            .RequireAuthorization(AuthHelper.DefaultPolicy)
             .Produces(StatusCodes.Status200OK);
+
+        endp.MapGet("sign-out", SignOut)
+        .RequireAuthorization(AuthHelper.DefaultPolicy)
+        .Produces(StatusCodes.Status200OK);
+
 
         return endp;
     }
 
-    private async Task<Results<Ok, BadRequest, NotFound>> SignUpWeb([FromForm] SignUpCommand command, HttpContext context, IHandler<SignUpCommand, BearerTransport> handler, CancellationToken token)
+    private async Task<Ok> SignOut(ClaimsPrincipal claims, [FromKeyedServices("sign-out")] IRequestHandler<EntityId> handler, CancellationToken token)
+    {
+        await handler.HandlerAsync(Guid.Parse(claims.FindFirstValue(JwtRegisteredClaimNames.Jti)!), token);
+        return TypedResults.Ok();
+    }
+
+
+    private async Task<Ok> SignOutWeb(HttpContext context, ClaimsPrincipal claims, [FromKeyedServices("sign-out")] IRequestHandler<EntityId> handler, CancellationToken token)
+    {
+        context.Response.Cookies.Delete(AuthHelper.TokenCookieParameter, new CookieOptions()
+        {
+            Expires = DateTimeOffset.UtcNow,
+            Path = "/",
+            SameSite = SameSiteMode.Lax,
+        });
+
+        await handler.HandlerAsync(Guid.Parse(claims.FindFirstValue(JwtRegisteredClaimNames.Jti)!), token);
+
+        return TypedResults.Ok();
+    }
+
+
+    private async Task<Results<Ok, Problem>> SignUpWeb([FromForm] SignUpCommand command, HttpContext context, IHandler<SignUpCommand, BearerTransport> handler, CancellationToken token)
     {
         var result = await handler.HandlerAsync(command, token);
         context.Response.Cookies.Append(
@@ -51,15 +89,20 @@ public sealed class SignAuthEndpoint : IEndpoint
         return TypedResults.Ok();
     }
 
-    private async Task<Results<Ok<BearerTransport>, NotFound>> SignUp([FromForm] SignUpCommand command, IHandler<SignUpCommand, BearerTransport> handler, CancellationToken token)
+    private async Task<Results<Ok<BearerTransport>, Problem>> SignUp([FromForm] SignUpCommand request, IHandler<SignUpCommand, BearerTransport> handler, CancellationToken token)
     {
-        var result = await handler.HandlerAsync(command, token);
+        var result = await handler.HandlerAsync(request, token);
         return TypedResults.Ok(result.Value);
     }
 
-    private async Task<Results<Ok<BearerTransport>, BadRequest>> SignIn(SignInRequest command, IHandler<SignInRequest, BearerTransport> handler, CancellationToken token)
+    private async Task<Results<Ok<BearerTransport>, Problem>> SignIn(SignInRequest request, IHandler<SignInRequest, BearerTransport> handler, CancellationToken token)
     {
-        var result = await handler.HandlerAsync(command, token);
-        return result.IsSuccess ? TypedResults.Ok(result.Value) : TypedResults.BadRequest();
+        var result = await handler.HandlerAsync(request, token);
+        return result.Status switch
+        {
+            ResultStatus.Ok => TypedResults.Ok(result.Value),
+            ResultStatus.NotFound or ResultStatus.NoContent => new Problem(StatusCodes.Status404NotFound, "Recurso no encontrado", "No existe un registro con esos datos."),
+            _ => new Problem(StatusCodes.Status400BadRequest, "Credenciales inválidas", "El correo o la contraseña no son correctos.")
+        };
     }
 }

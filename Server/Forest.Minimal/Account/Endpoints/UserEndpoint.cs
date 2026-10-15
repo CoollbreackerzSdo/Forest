@@ -17,18 +17,23 @@ public sealed class UserEndpoint : IEndpoint
 
         endp.MapPut("", Update)
             .Accepts<UpdateUserRequest>("multipart/form-data")
-            .AddEndpointFilter<ValidationFilter<UpdateUserRequest>>();
+            .AddEndpointFilter<ValidationFilter<UpdateUserRequest>>()
+            .Produces(StatusCodes.Status200OK)
+            .Produces<Problem>(StatusCodes.Status400BadRequest, Problem.ContentType)
+            .Produces<Problem>(StatusCodes.Status401Unauthorized, Problem.ContentType)
+            .Produces<Problem>(StatusCodes.Status404NotFound, Problem.ContentType);
 
         return endp;
     }
 
-    private async Task<Results<Ok, NotFound, UnauthorizedHttpResult>> Update([FromForm] UpdateUserRequest request, ClaimsPrincipal claims, IRequestHandler<UpdateUserQuery> handler, CancellationToken token)
+    private async Task<Results<Ok, Problem>> Update([FromForm] UpdateUserRequest request, ClaimsPrincipal claims, IRequestHandler<UpdateUserQuery> handler, CancellationToken token)
     {
-        if (Guid.TryParse(claims.FindFirstValue(JwtRegisteredClaimNames.Sub), out var id))
-        {
-            var result = await handler.HandlerAsync(new(id, request), token);
-            return result.IsSuccess ? TypedResults.Ok() : TypedResults.NotFound();
-        }
-        return TypedResults.Unauthorized();
+        if (!Guid.TryParse(claims.FindFirstValue(JwtRegisteredClaimNames.Sub), out var id))
+            return new Problem(StatusCodes.Status401Unauthorized, "Token inválido", "El token no contiene un identificador de usuario legible.");
+
+        var result = await handler.HandlerAsync(new(id, request), token);
+        return result.IsSuccess
+            ? TypedResults.Ok()
+            : new Problem(StatusCodes.Status404NotFound, "Recurso no encontrado", "No existe un registro con esos datos.");
     }
 }

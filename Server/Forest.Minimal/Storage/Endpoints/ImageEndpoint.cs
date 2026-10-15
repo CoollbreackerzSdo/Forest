@@ -14,14 +14,17 @@ public sealed class ImageEndpoint : IEndpoint
         var endp = builder.MapGroup("img").WithTags("Images");
 
         endp.MapGet("{imageId}", Download)
-            .Produces<FileStreamHttpResult>();
+            .Produces<FileStreamHttpResult>()
+            .Produces<Problem>(StatusCodes.Status404NotFound, Problem.ContentType);
 
         return endp;
     }
 
-    private async Task<Results<FileStreamHttpResult, NotFound>> Download(string imageId, IHandler<ImageQuery, ImageResult> handler, CancellationToken token)
+    private async Task<Results<FileStreamHttpResult, Problem>> Download(string imageId, IHandler<ImageQuery, ImageResult> handler, CancellationToken token)
     {
         var result = await handler.HandlerAsync(new(imageId), token);
-        return result.IsSuccess ? TypedResults.File(result.Value.Content, result.Value.ContentType) : TypedResults.NotFound();
+        return result.IsSuccess
+            ? TypedResults.File(result.Value.Content, result.Value.ContentType)
+            : new Problem(StatusCodes.Status404NotFound, "Imagen no encontrada", "No existe una imagen con ese identificador.");
     }
 }
