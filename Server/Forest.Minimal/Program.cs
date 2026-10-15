@@ -4,15 +4,18 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi(op => op.AddDocumentTransformer<BearerTransformer>());
 
-builder.AddServiceDefaults()
+builder.AddLogs()
+    .AddServiceDefaults()
     .AddValidationConfiguration()
     .AddBearer()
     .AddObjectStorage()
+    .AddImageCleaner()
     .AddContext()
     .AddAuth();
 
 builder.Services.AddMiddlewares()
     .AddEndpoints()
+    .AddChannels()
     .AddHandlers()
     .AddHash()
     .AddValidators();

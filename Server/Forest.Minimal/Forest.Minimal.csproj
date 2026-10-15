@@ -19,6 +19,8 @@
     </PackageReference>
     <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.17.14" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
   </ItemGroup>
 
   <ItemGroup>

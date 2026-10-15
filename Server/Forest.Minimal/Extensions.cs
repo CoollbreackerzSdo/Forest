@@ -11,24 +11,54 @@ using Forest.Minimal.Account.Services.Bearer.Generator;
 using Forest.Minimal.Account.Services.Bearer.Models;
 using Forest.Minimal.Account.Services.Validator;
 using Forest.Minimal.Common.Endpoints.Abstractions;
-using Forest.Minimal.Common.Endpoints.Middlewares;
 using Forest.Minimal.Common.Handlers;
+using Forest.Minimal.Common.Middlewares;
 using Forest.Minimal.Common.Services.Validation;
 using Forest.Minimal.Storage.Handlers;
 using Forest.Minimal.Storage.Helpers;
+using Forest.Minimal.Storage.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using RustfsClient;
 using RustfsClient.Abstractions;
 using RustfsClient.Options;
+using Serilog;
+using Serilog.Configuration;
+using Serilog.Extensions.Hosting;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Forest.Minimal;
 
 public static partial class Extensions
 {
+    /// <summary>
+    /// Salida por consola: solo el nivel (coloreado por Serilog) y el mensaje, sin fecha,
+    /// sin origen y sin el volcado de propiedades. Las excepciones van debajo.
+    /// </summary>
+    private const string OutputTemplate = "[{Level:u3}] {Message:lj}{NewLine}{Exception}";
+
     extension(IHostApplicationBuilder builder)
     {
+        public IHostApplicationBuilder AddLogs()
+        {
+            // Se llama antes que AddServiceDefaults para poder limpiar los providers por defecto
+            // (console/debug) y dejar solo el de OpenTelemetry, que se registra despues.
+            builder.Logging.ClearProviders();
+
+            // Los niveles salen de la seccion "Serilog" de appsettings. writeToProviders mantiene
+            // el export de logs a OpenTelemetry.
+            builder.Services.AddSerilog((_, logger) => logger
+                .ReadFrom.Configuration(builder.Configuration)
+                .WriteTo.Console(
+                    // Ansi + applyThemeToRedirectedOutput: Aspire captura la salida por proceso,
+                    // asi que sin esto los colores se pierden.
+                    theme: AnsiConsoleTheme.Code,
+                    applyThemeToRedirectedOutput: true,
+                    outputTemplate: OutputTemplate),
+                writeToProviders: true);
+            return builder;
+        }
         public IHostApplicationBuilder AddValidationConfiguration()
         {
             builder.Services.Configure<ValidationConfiguration>(builder.Configuration.GetSection("ValidationConfiguration"));
@@ -71,7 +101,8 @@ public static partial class Extensions
                 };
                 op.Events = new()
                 {
-                    OnMessageReceived = MapCookieEvent.OnMessageReceived
+                    OnMessageReceived = MapCookieEvent.OnMessageReceived,
+                    OnTokenValidated = ValidateLifeBearerEvent.OnTokenValidated
                 };
             });
             builder.Services.AddAuthorizationBuilder()
@@ -99,11 +130,24 @@ public static partial class Extensions
             });
             return builder;
         }
+        public IHostApplicationBuilder AddImageCleaner()
+        {
+            builder.Services.Configure<ImageCleanerConfiguration>(builder.Configuration.GetSection(nameof(ImageCleanerConfiguration)));
+            builder.Services.AddHostedService<ImageCleanerService>();
+            return builder;
+        }
     }
     extension(IServiceCollection services)
     {
         public IServiceCollection AddChannels() => services
-            .AddKeyedSingleton<Channel<string?>>("img-cleaner");
+            // DropOldest + TryWrite: si el canal se llena se descarta la clave mas antigua en
+            // lugar de frenar al escritor. El barrido periodico rescata lo que se pierda.
+            .AddKeyedSingleton<Channel<string>>(StorageHelper.CleanerChannel, (_, _) => Channel.CreateBounded<string>(new BoundedChannelOptions(1024)
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                FullMode = BoundedChannelFullMode.DropOldest
+            }));
         public IServiceCollection AddValidators() => services
             .AddSingleton<IValidator<SignUpCommand>, SignUpValidator>()
             .AddSingleton<IValidator<SignInRequest>, SignInValidator>()
@@ -112,7 +156,8 @@ public static partial class Extensions
             .AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>()
             .AddTransient<IHandler<SignInRequest, BearerTransport>, SignInHandler>()
             .AddTransient<IHandler<ImageQuery, ImageResult>, ImageHandler>()
-            .AddTransient<IRequestHandler<UpdateUserQuery>, UpdateUserHandler>();
+            .AddTransient<IRequestHandler<UpdateUserQuery>, UpdateUserHandler>()
+            .AddKeyedTransient<IRequestHandler<EntityId>, SignOutHandler>("sign-out");
         public IServiceCollection AddHash() => services
             .AddSingleton<IPasswordHasher<UserModel>, PasswordHasher<UserModel>>();
         public IServiceCollection AddEndpoints()
