@@ -77,13 +77,11 @@ public sealed class ImageCleanerService(
 
         var objects = await storage.ListObjectsAsync(StorageHelper.BucketName, cancellationToken: token);
 
-        var referenced = (await context.Users
-                .Where(x => x.Details != null)
-                .Select(x => new { PhotoId = x.Details!.PhotoId, BannerId = x.Details!.BannerId })
-                .ToListAsync(token))
+        var referenced = context.Users
+            .Select(x => new { PhotoId = x.Details!.PhotoId, BannerId = x.Details!.BannerId })
+            .ToArray()
             .SelectMany(x => new[] { x.PhotoId, x.BannerId })
-            .Where(x => !string.IsNullOrEmpty(x))
-            .ToHashSet(StringComparer.Ordinal);
+            .Where(x => string.IsNullOrWhiteSpace(x));
 
         return [.. objects.Select(x => x.Key).Where(x => !referenced.Contains(x))];
     }
