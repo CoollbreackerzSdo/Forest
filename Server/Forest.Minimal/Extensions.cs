@@ -17,6 +17,7 @@ using Forest.Minimal.Common.Services.Validation;
 using Forest.Minimal.Storage.Handlers;
 using Forest.Minimal.Storage.Helpers;
 using Forest.Minimal.Storage.Services;
+using Forest.Minimal.Storage.Services.Validation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -151,11 +152,13 @@ public static partial class Extensions
         public IServiceCollection AddValidators() => services
             .AddSingleton<IValidator<SignUpCommand>, SignUpValidator>()
             .AddSingleton<IValidator<SignInRequest>, SignInValidator>()
-            .AddSingleton<IValidator<UpdateUserRequest>, UpdateUserValidator>();
+            .AddSingleton<IValidator<UpdateUserRequest>, UpdateUserValidator>()
+            .AddSingleton<IValidator<UploadImgRequest>, UpdateImgRequestValidation>();
         public IServiceCollection AddHandlers() => services
             .AddTransient<IHandler<SignUpCommand, BearerTransport>, SignUpHandler>()
             .AddTransient<IHandler<SignInRequest, BearerTransport>, SignInHandler>()
             .AddTransient<IHandler<ImageQuery, ImageResult>, ImageHandler>()
+            .AddTransient<IHandler<UploadImgRequest, string>, UpdateImageHandler>()
             .AddTransient<IRequestHandler<UpdateUserQuery>, UpdateUserHandler>()
             .AddKeyedTransient<IRequestHandler<EntityId>, SignOutHandler>("sign-out");
         public IServiceCollection AddHash() => services
