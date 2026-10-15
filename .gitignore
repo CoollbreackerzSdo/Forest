@@ -6,6 +6,7 @@
 # dotenv files
 .env
 env
+actions-runner
 # User-specific files
 *.rsuser
 *.suo
