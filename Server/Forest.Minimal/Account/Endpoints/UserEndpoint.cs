@@ -23,8 +23,11 @@ public sealed class UserEndpoint : IEndpoint
             .Produces<Problem>(StatusCodes.Status401Unauthorized, Problem.ContentType)
             .Produces<Problem>(StatusCodes.Status404NotFound, Problem.ContentType);
 
+        endp.MapGet("", (ClaimsPrincipal claims) => new { Email = claims.FindFirstValue(JwtRegisteredClaimNames.Email), UserName = claims.FindFirstValue(JwtRegisteredClaimNames.UniqueName) });
+
         return endp;
     }
+
 
     private async Task<Results<Ok, Problem>> Update([FromForm] UpdateUserRequest request, ClaimsPrincipal claims, IRequestHandler<UpdateUserQuery> handler, CancellationToken token)
     {
