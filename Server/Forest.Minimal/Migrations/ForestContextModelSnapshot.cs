@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Forest.Minimal.Migrations
 {
     [DbContext(typeof(ForestContext))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    partial class ForestContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -79,9 +79,10 @@ namespace Forest.Minimal.Migrations
 
                     b.HasKey("Key");
 
-                    b.HasAlternateKey("UserName");
-
                     b.HasIndex("Register");
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
 
                     b.ToTable("users", (string)null);
                 });

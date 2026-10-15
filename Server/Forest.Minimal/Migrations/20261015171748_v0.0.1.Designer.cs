@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Forest.Minimal.Migrations
 {
     [DbContext(typeof(ForestContext))]
-    [Migration("20261011221355_v1")]
-    partial class v1
+    [Migration("20261015171748_v0.0.1")]
+    partial class v001
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -82,9 +82,10 @@ namespace Forest.Minimal.Migrations
 
                     b.HasKey("Key");
 
-                    b.HasAlternateKey("UserName");
-
                     b.HasIndex("Register");
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
 
                     b.ToTable("users", (string)null);
                 });
@@ -102,19 +103,28 @@ namespace Forest.Minimal.Migrations
                 {
                     b.OwnsOne("Forest.Minimal.Account.Models.Details", "Details", b1 =>
                         {
-                            b1.Property<Guid>("UserModelKey");
+                            b1.Property<Guid>("UserModelKey")
+                                .HasColumnType("uuid");
 
-                            b1.Property<string>("FirstName");
+                            b1.Property<string>("BannerId")
+                                .HasColumnType("text")
+                                .HasColumnName("banner_id");
 
-                            b1.Property<string>("LastName");
+                            b1.Property<string>("FirstName")
+                                .HasColumnType("text")
+                                .HasColumnName("first_name");
+
+                            b1.Property<string>("LastName")
+                                .HasColumnType("text")
+                                .HasColumnName("last_name");
+
+                            b1.Property<string>("PhotoId")
+                                .HasColumnType("text")
+                                .HasColumnName("photo_id");
 
                             b1.HasKey("UserModelKey");
 
-                            b1.ToTable("users");
-
-                            b1
-                                .ToJson("details")
-                                .HasColumnType("jsonb");
+                            b1.ToTable("user_details", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("UserModelKey");
