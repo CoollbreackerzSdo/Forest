@@ -21,8 +21,8 @@ builder.Services.AddMiddlewares()
     .AddValidators();
 
 var app = builder.Build();
-_ = app.MigrateAsync();
-_ = app.LoadBucketAsync();
+await app.MigrateAsync();
+await app.LoadBucketAsync();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
