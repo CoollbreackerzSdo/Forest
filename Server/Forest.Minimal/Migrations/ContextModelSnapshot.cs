@@ -99,19 +99,28 @@ namespace Forest.Minimal.Migrations
                 {
                     b.OwnsOne("Forest.Minimal.Account.Models.Details", "Details", b1 =>
                         {
-                            b1.Property<Guid>("UserModelKey");
+                            b1.Property<Guid>("UserModelKey")
+                                .HasColumnType("uuid");
 
-                            b1.Property<string>("FirstName");
+                            b1.Property<string>("BannerId")
+                                .HasColumnType("text")
+                                .HasColumnName("banner_id");
 
-                            b1.Property<string>("LastName");
+                            b1.Property<string>("FirstName")
+                                .HasColumnType("text")
+                                .HasColumnName("first_name");
+
+                            b1.Property<string>("LastName")
+                                .HasColumnType("text")
+                                .HasColumnName("last_name");
+
+                            b1.Property<string>("PhotoId")
+                                .HasColumnType("text")
+                                .HasColumnName("photo_id");
 
                             b1.HasKey("UserModelKey");
 
-                            b1.ToTable("users");
-
-                            b1
-                                .ToJson("details")
-                                .HasColumnType("jsonb");
+                            b1.ToTable("user_details", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("UserModelKey");
