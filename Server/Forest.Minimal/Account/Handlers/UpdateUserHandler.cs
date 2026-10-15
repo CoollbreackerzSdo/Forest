@@ -1,35 +1,52 @@
+using System.Threading.Channels;
 using Forest.Minimal.Common.Handlers;
+using Forest.Minimal.Storage.Helpers;
 using RustfsClient.Abstractions;
 
 namespace Forest.Minimal.Account.Handlers;
 
-public sealed class UpdateUserHandler(ForestContext context, IRustfsObjectStorageClient client) : IRequestHandler<UpdateUserQuery>
+public sealed class UpdateUserHandler(
+    ForestContext context,
+    IRustfsObjectStorageClient client,
+    [FromKeyedServices(StorageHelper.CleanerChannel)] Channel<string> cleaner) : IRequestHandler<UpdateUserQuery>
 {
     public async Task<Result> HandlerAsync(UpdateUserQuery request, CancellationToken token)
     {
+        var user = context.Users.Where(x => x.Key == request.UserId).SingleOrDefault();
+        if (user is null) return Result.NoContent();
+
+        if (!string.IsNullOrWhiteSpace(request.Request.UserName))
+            user.UserName = request.Request.UserName;
+        if (!string.IsNullOrWhiteSpace(request.Request.FirstName))
+            user.Details?.FirstName = request.Request.FirstName;
+        if (!string.IsNullOrWhiteSpace(request.Request.LastName))
+            user.Details?.LastName = request.Request.LastName;
         string? bannerId = null, photoId = null;
 
         if (request.Request.Photo is not null)
+        {
             photoId = await client.UploadAsync(request.Request.Photo, token);
+            (photoId, user.Details!.PhotoId) = (user.Details!.PhotoId, photoId);
+        }
 
         if (request.Request.Banner is not null)
-            bannerId = await client.UploadAsync(request.Request.Banner, token);
-
-        await context.Users.ExecuteUpdateAsync((query) =>
         {
-            if (!string.IsNullOrWhiteSpace(request.Request.UserName))
-                query.SetProperty(x => x.UserName, request.Request.UserName);
-            if (!string.IsNullOrWhiteSpace(request.Request.FirstName))
-                query.SetProperty(x => x.Details!.FirstName, request.Request.FirstName);
-            if (!string.IsNullOrWhiteSpace(request.Request.LastName))
-                query.SetProperty(x => x.Details!.LastName, request.Request.LastName);
-            if (!string.IsNullOrWhiteSpace(photoId))
-                query.SetProperty(x => x.Details!.PhotoId, photoId);
-            if (!string.IsNullOrWhiteSpace(bannerId))
-                query.SetProperty(x => x.Details!.BannerId, bannerId);
-        }, token);
+            bannerId = await client.UploadAsync(request.Request.Banner, token);
+            (bannerId, user.Details!.BannerId) = (user.Details!.BannerId, bannerId);
+        }
+
+        await context.SaveChangesAsync(token);
+
+        _ = Queue(photoId);
+        _ = Queue(bannerId);
 
         return Result.Success();
+    }
+
+    private Task Queue(string? key)
+    {
+        if (!string.IsNullOrEmpty(key)) cleaner.Writer.TryWrite(key);
+        return Task.CompletedTask;
     }
 }
 public record UpdateUserQuery(EntityId UserId, UpdateUserRequest Request);
