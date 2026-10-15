@@ -98,6 +98,7 @@ public sealed class UpdateUserHandlerTests : IDisposable
     {
         await SendToActualUserAsync(new UpdateUserRequest { Photo = TestData.File("primera.png") });
         var primera = (await ReloadAsync()).Details!.PhotoId;
+        Assert.NotNull(primera);
         Assert.Empty(await EnqueuedAsync());
 
         await SendToActualUserAsync(new UpdateUserRequest { Photo = TestData.File("segunda.png") });
@@ -113,6 +114,7 @@ public sealed class UpdateUserHandlerTests : IDisposable
     {
         await SendToActualUserAsync(new UpdateUserRequest { Banner = TestData.File("primera.png") });
         var primera = (await ReloadAsync()).Details!.BannerId;
+        Assert.NotNull(primera);
 
         await SendToActualUserAsync(new UpdateUserRequest { Banner = TestData.File("segunda.png") });
 
@@ -164,21 +166,26 @@ public sealed class UpdateUserHandlerTests : IDisposable
         Assert.Empty(await EnqueuedAsync());
     }
 
-    /// <summary>
-    /// Defecto conocido: <c>UserName</c> esta mapeado como clave alternada
-    /// (<c>HasAlternateKey(x =&gt; x.UserName)</c>), asi que EF Core rechaza modificarlo.
-    /// </summary>
     [Fact]
-    public async Task HandlerAsync_NoPuedeCambiarElUserName()
+    public async Task HandlerAsync_DeberiaActualizarElUserName()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            SendToActualUserAsync(new UpdateUserRequest { UserName = "usuario-actualizado" }));
+        var result = await SendToActualUserAsync(new UpdateUserRequest { UserName = "usuario-actualizado" });
+
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal("usuario-actualizado", (await ReloadAsync()).UserName);
+    }
+
+    [Fact]
+    public async Task HandlerAsync_NoDebeCambiarElUserNameSiVieneVacio()
+    {
+        await SendToActualUserAsync(new UpdateUserRequest { UserName = "   " });
+
+        Assert.Equal("usuario", (await ReloadAsync()).UserName);
     }
 
     /// <summary>
     /// Defecto conocido: <c>FirstName</c> y <c>LastName</c> se asignan a
-    /// <c>user.UserName</c> en vez de a <c>user.Details.FirstName</c> / <c>LastName</c>.
-    /// Como <c>UserName</c> es clave alternada, EF Core lanza antes de guardar.
+    /// El nombre y el apellido se guardan en Details y no pisan el UserName.
     /// </summary>
     [Fact]
     public async Task HandlerAsync_NoDebeActualizarElUserNameAlCambiarElNombre()

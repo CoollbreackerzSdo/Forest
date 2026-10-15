@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using Aspire.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,12 +25,17 @@ public sealed class ForestAppFixture : IAsyncLifetime
         ["SecretKey"] = "forestsecret0123456789"
     };
 
+    /// <summary>Puertos que AppHost.cs fija con WithEndpoint; si estan ocupados los tests fallan.</summary>
+    private static readonly int[] Ports = [5610, 5611, 5612, 5613, 5614, 5620, 5621];
+
     public DistributedApplication? Application { get; private set; }
 
     public HttpClient Client { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
+        EnsurePortsAreFree();
+
         var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Forest_Host>();
 
         // Valores deterministas para los parametros secretos, que si no Aspire pediria por consola.
@@ -68,6 +75,34 @@ public sealed class ForestAppFixture : IAsyncLifetime
         Client?.Dispose();
         if (Application is not null)
             await Application.DisposeAsync();
+    }
+
+    /// <summary>
+    /// El AppHost fija puertos y Aspire no los reasigna si estan ocupados: falla mas tarde
+    /// con un error de DCP dificil de leer. Aqui se avisa antes y con el puerto concreto.
+    /// </summary>
+private static void EnsurePortsAreFree()
+    {
+        var busy = new List<int>();
+
+        foreach (var port in Ports)
+        {
+            try
+            {
+                using var listener = new TcpListener(IPAddress.Loopback, port);
+                listener.Start();
+                listener.Stop();
+            }
+            catch (SocketException)
+            {
+                busy.Add(port);
+            }
+        }
+
+        if (busy.Count > 0)
+            throw new InvalidOperationException(
+                $"El AppHost necesita los puertos {string.Join(", ", busy)} y estan ocupados. " +
+                "Cierra la app o el dashboard de Aspire antes de lanzar los tests.");
     }
 
     private async Task WaitForServerAsync()

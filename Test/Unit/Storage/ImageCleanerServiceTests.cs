@@ -37,7 +37,7 @@ public sealed class ImageCleanerServiceTests : IDisposable
 
     private int _sequence;
 
-    private void Reference(params (EntityId User, string Photo, string Banner)[] users)
+    private void Reference(params (EntityId User, string? Photo, string? Banner)[] users)
     {
         foreach (var user in users)
             _scope.Context.Users.Add(new UserModel
