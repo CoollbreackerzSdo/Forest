@@ -42,9 +42,8 @@ public sealed class SignAuthEndpoint : IEndpoint
             .Produces(StatusCodes.Status200OK);
 
         endp.MapGet("sign-out", SignOut)
-        .RequireAuthorization(AuthHelper.DefaultPolicy)
-        .Produces(StatusCodes.Status200OK);
-
+            .RequireAuthorization(AuthHelper.DefaultPolicy)
+            .Produces(StatusCodes.Status200OK);
 
         return endp;
     }
