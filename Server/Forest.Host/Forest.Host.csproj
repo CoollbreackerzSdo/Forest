@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/17.0.0-preview.1.26510.5">
+<Project Sdk="Aspire.AppHost.Sdk/17.0.0-preview.1.26516.2">
 
   <ItemGroup>
     <ProjectReference Include="..\Forest.Minimal\Forest.Minimal.csproj" />
