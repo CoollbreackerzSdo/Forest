@@ -39,22 +39,23 @@ public sealed class RustfsObjectStorageClient : IRustfsObjectStorageClient
 
     public async Task<IReadOnlyList<RustfsObjectInfo>> ListObjectsAsync(string bucketName, string? prefix = null, CancellationToken cancellationToken = default)
     {
-        var objects = new List<RustfsObjectInfo>();
+        List<RustfsObjectInfo> objects = [];
         string? continuationToken = null;
 
         do
         {
-            var response = await _s3Client.ListObjectsV2Async(new()
+            var response = await _s3Client.ListObjectsV2Async(new ListObjectsV2Request()
             {
                 BucketName = bucketName,
-                Prefix = prefix,
-                ContinuationToken = continuationToken
+                ContinuationToken = continuationToken,
             }, cancellationToken);
+
+            if (response.S3Objects is null or { Count: 0 }) return objects;
 
             objects.AddRange(response.S3Objects.Select(item => new RustfsObjectInfo(
                 item.Key,
-                item.Size ?? 0,
-                item.LastModified ?? default,
+                (long)item.Size!,
+                (DateTimeOffset)(DateTime)item.LastModified!,
                 item.ETag)));
 
             continuationToken = response.IsTruncated ?? false ? response.NextContinuationToken : null;

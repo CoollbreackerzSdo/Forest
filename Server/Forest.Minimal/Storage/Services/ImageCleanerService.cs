@@ -56,6 +56,7 @@ public sealed class ImageCleanerService(
             try
             {
                 await DeleteAsync(await FindOrphansAsync(token), token);
+                logger.LogInformation("Barrido de imágenes imágenes huérfanas completado.");
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
@@ -63,7 +64,7 @@ public sealed class ImageCleanerService(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "No se pudo completar el barrido de imagenes huerfanas.");
+                logger.LogError(exception, "No se pudo completar el barrido de imágenes huérfanas.");
             }
         }
     }

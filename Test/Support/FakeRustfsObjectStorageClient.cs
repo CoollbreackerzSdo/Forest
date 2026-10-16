@@ -11,10 +11,9 @@ namespace Forest.Test.Support;
 /// </summary>
 public sealed class FakeRustfsObjectStorageClient : IRustfsObjectStorageClient
 {
-    private readonly Dictionary<string, Dictionary<string, FakeObject>> _buckets = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _failing = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<string, FakeObject>> _buckets = [with(StringComparer.Ordinal)];
+    private readonly HashSet<string> _failing = [with(StringComparer.Ordinal)];
     private readonly Lock _gate = new();
-
     public List<string> EnsuredBuckets { get; } = [];
     public List<string> DeletedKeys { get; } = [];
 
@@ -29,7 +28,7 @@ public sealed class FakeRustfsObjectStorageClient : IRustfsObjectStorageClient
         lock (_gate)
             return _buckets.TryGetValue(bucketName, out var bucket)
                 ? bucket.ToDictionary(x => x.Key, x => x.Value.Content, StringComparer.Ordinal)
-                : new Dictionary<string, byte[]>(StringComparer.Ordinal);
+                : [with(StringComparer.Ordinal)];
     }
 
     public Task UploadAsync(string bucketName, string objectKey, Stream content, string? contentType = null, long? contentLength = null, CancellationToken cancellationToken = default)
