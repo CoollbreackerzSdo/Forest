@@ -5,17 +5,6 @@ using RustfsClient.Abstractions;
 
 namespace Forest.Minimal.Storage.Services;
 
-/// <summary>
-/// Borra en segundo plano las imagenes que ya no referencia ningun usuario.<para>
-/// Dos caminos alimentan el borrado:</para>
-/// <list type="number">
-/// <item>El canal, que el handler escribe con <c>TryWrite</c> cuando una imagen deja de
-/// estar referenciada. No espera: la peticion responde en cuanto se encola.</item>
-/// <item>Un barrido periodico que compara el bucket contra la base de datos. Es la red de
-/// seguridad: limpia lo que se haya quedado en el canal, lo que se perdio al encolar y lo
-/// que dejo huérfano un proceso anterior al caerse.</item>
-/// </list>
-/// </summary>
 public sealed class ImageCleanerService(
     ILogger<ImageCleanerService> logger,
     IServiceScopeFactory scopes,
@@ -33,20 +22,15 @@ public sealed class ImageCleanerService(
         {
             await Task.WhenAll(DrainAsync(queue, stoppingToken), SweepAsync(stoppingToken));
         }
-        catch (OperationCanceledException)
-        {
-            // Apagado ordenado del host.
-        }
+        catch (OperationCanceledException) { }
     }
 
-    /// <summary>Consume el canal sin bloquear a nadie: el escritor usa TryWrite.</summary>
     private async Task DrainAsync(Channel<string> queue, CancellationToken token)
     {
         await foreach (var key in queue.Reader.ReadAllAsync(token))
             await DeleteAsync([key], token);
     }
 
-    /// <summary>Barrido periodico de seguridad sobre todo el bucket.</summary>
     private async Task SweepAsync(CancellationToken token)
     {
         using var timer = new PeriodicTimer(_configuration.Interval);
@@ -69,7 +53,6 @@ public sealed class ImageCleanerService(
         }
     }
 
-    /// <summary>Claves del bucket que ningun usuario referencia en Details.</summary>
     public async Task<IReadOnlyList<string>> FindOrphansAsync(CancellationToken token)
     {
         using var scope = scopes.CreateScope();
@@ -82,12 +65,12 @@ public sealed class ImageCleanerService(
             .Select(x => new { PhotoId = x.Details!.PhotoId, BannerId = x.Details!.BannerId })
             .ToArray()
             .SelectMany(x => new[] { x.PhotoId, x.BannerId })
-            .Where(x => string.IsNullOrWhiteSpace(x));
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.Ordinal);
 
         return [.. objects.Select(x => x.Key).Where(x => !referenced.Contains(x))];
     }
 
-    /// <summary>Borra las claves en paralelo. Un fallo puntual no corta el resto.</summary>
     public async Task DeleteAsync(IReadOnlyList<string> keys, CancellationToken token)
     {
         if (keys.Count == 0) return;
