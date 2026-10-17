@@ -41,7 +41,7 @@ public sealed class AppHostResourceTests : IAsyncLifetime
         Assert.IsType<PostgresServerResource>(Resource("forest-database"));
 
         var tcp = Endpoint("forest-database", "tcp");
-        Assert.Equal(5610, tcp.Port);
+        Assert.Equal(7000, tcp.Port);
         Assert.Equal(5432, tcp.TargetPort);
     }
 
@@ -49,7 +49,7 @@ public sealed class AppHostResourceTests : IAsyncLifetime
     public void DeberiaDeclararPgAdminContraLaBaseDeDatos()
     {
         Assert.IsType<PgAdminContainerResource>(Resource("forest-pg"));
-        Assert.Equal(5611, Endpoint("forest-pg", "http").Port);
+        Assert.Equal(7001, Endpoint("forest-pg", "http").Port);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public sealed class AppHostResourceTests : IAsyncLifetime
         Assert.IsType<RedisResource>(Resource("forest-cache"));
 
         var tcp = Endpoint("forest-cache", "tcp");
-        Assert.Equal(5612, tcp.Port);
+        Assert.Equal(7002, tcp.Port);
         Assert.Equal(6379, tcp.TargetPort);
     }
 
@@ -68,11 +68,11 @@ public sealed class AppHostResourceTests : IAsyncLifetime
         Assert.IsType<RustfsResource>(Resource("forest-s3"));
 
         var api = Endpoint("forest-s3", "default");
-        Assert.Equal(5613, api.Port);
+        Assert.Equal(7003, api.Port);
         Assert.Equal(9000, api.TargetPort);
 
         var console = Endpoint("forest-s3", "console");
-        Assert.Equal(5614, console.Port);
+        Assert.Equal(7004, console.Port);
         Assert.Equal(9001, console.TargetPort);
     }
 
@@ -80,8 +80,37 @@ public sealed class AppHostResourceTests : IAsyncLifetime
     public void DeberiaDeclararElServidorConEndpointsHttpYHttps()
     {
         Assert.IsType<ProjectResource>(Resource("forest-server"));
-        Assert.Equal(5620, Endpoint("forest-server", "http").Port);
-        Assert.Equal(5621, Endpoint("forest-server", "https").Port);
+        Assert.Equal(7010, Endpoint("forest-server", "http").Port);
+        Assert.Equal(7011, Endpoint("forest-server", "https").Port);
+    }
+
+    /// <summary>
+    /// El cliente es un contenedor, y a diferencia de un proyecto Aspire no puede deducir
+    /// solo el puerto de destino. Sin declararlo, el AppHost aborta al arrancar con
+    /// "must specify the TargetPort value", asi que esta comprobacion evita que vuelva.
+    /// </summary>
+    [Fact]
+    public void DeberiaDeclararElClienteConPuertoDeHostYTDeContenedor()
+    {
+        Assert.IsType<ContainerResource>(Resource("forest-client"));
+
+        var http = Endpoint("forest-client", "http");
+        Assert.Equal(7020, http.Port);
+        // nginx escucha en el 80 dentro del contenedor: ENV PORT=80 y EXPOSE 80 en el Dockerfile.
+        Assert.Equal(80, http.TargetPort);
+    }
+
+    [Fact]
+    public void ElClienteDeberiaEsperarAlServidor()
+    {
+        var waited = Resource("forest-client").Annotations
+            .OfType<WaitAnnotation>()
+            .Select(x => x.Resource?.Name ?? string.Empty)
+            .ToArray();
+
+        // El cliente habla siempre con rutas relativas y un proxy delante, asi que
+        // tiene que arrancar despues del servidor para no atender trafico a medias.
+        Assert.Contains("forest-server", waited);
     }
 
     [Fact]

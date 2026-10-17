@@ -25,8 +25,12 @@ public sealed class ForestAppFixture : IAsyncLifetime
         ["SecretKey"] = "forestsecret0123456789"
     };
 
-    /// <summary>Puertos que AppHost.cs fija con WithEndpoint; si estan ocupados los tests fallan.</summary>
-    private static readonly int[] Ports = [5610, 5611, 5612, 5613, 5614, 5620, 5621];
+    /// <summary>
+    /// Puertos que AppHost.cs fija; si estan ocupados los tests fallan.
+    /// Tienen que coincidir con los <c>WithEndpoint</c> y <c>WithHttpEndpoint</c> del AppHost:
+    /// base 7000, pgAdmin 7001, cache 7002, s3 7003 y consola 7004, API 7010/7011 y cliente 7020.
+    /// </summary>
+    private static readonly int[] Ports = [7000, 7001, 7002, 7003, 7004, 7010, 7011, 7020];
 
     public DistributedApplication? Application { get; private set; }
 
