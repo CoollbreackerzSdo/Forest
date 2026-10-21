@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "@tailwindcss/cli": "npm:@tailwindcss/cli@^4.3.3",
+    "tailwindcss": "npm:tailwindcss@^4.3.3"
+  },
+  "nodeModulesDir": "auto",
+  "allowScripts": {
+    "allow": [],
+    "deny": ["npm:@parcel/watcher@2.5.1"]
+  },
+  "tasks": {
+    "css": "deno run -A npm:@tailwindcss/cli -i ./Styles/app.css -o ./wwwroot/css/app.css --minify",
+    "css:watch": "deno run -A npm:@tailwindcss/cli -i ./Styles/app.css -o ./wwwroot/css/app.css --watch"
+  }
+}
