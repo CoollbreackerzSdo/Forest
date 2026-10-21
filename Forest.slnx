@@ -13,4 +13,5 @@
   <Folder Name="/Test/">
     <Project Path="Test/Forest.Test.csproj" />
   </Folder>
+  <Project Path="Client/Client.csproj" />
 </Solution>
