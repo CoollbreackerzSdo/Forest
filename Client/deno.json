@@ -9,7 +9,8 @@
     "deny": ["npm:@parcel/watcher@2.5.1"]
   },
   "tasks": {
-    "css": "deno run -A npm:@tailwindcss/cli -i ./Styles/app.css -o ./wwwroot/css/app.css --minify",
-    "css:watch": "deno run -A npm:@tailwindcss/cli -i ./Styles/app.css -o ./wwwroot/css/app.css --watch"
+    "css": "deno run -A npm:@tailwindcss/cli -i ./wwwroot/css/styles.css -o ./wwwroot/css/app.css",
+    "css:watch": "deno run -A npm:@tailwindcss/cli -i ./wwwroot/css/styles.css -o ./wwwroot/css/app.css --watch",
+    "css:min": "deno run -A npm:@tailwindcss/cli -i ./wwwroot/css/styles.css -o ./wwwroot/css/app.css --minify"
   }
 }

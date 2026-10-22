@@ -1,3 +1,98 @@
 ﻿@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject NavigationManager Nav
+@inject OceanService Ocean
+@implements IDisposable
 
-@Body
+<div class="shell relative overflow-x-hidden">
+    <canvas id="ocean-canvas" class="ocean-canvas" aria-hidden="true"></canvas>
+    <div class="ocean-veil" aria-hidden="true"></div>
+    <div class="scroll-rail" aria-hidden="true"><span></span></div>
+
+    <header class="site-header">
+        <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+            <a href="/" class="brand" aria-label="Marea, inicio">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-5 w-5">
+                        <path d="M2 16c2.4 0 2.4-2.4 4.8-2.4S9.2 16 11.6 16s2.4-2.4 4.8-2.4S18.8 16 22 16" />
+                        <path d="M2 9.6c2.4 0 2.4-2.4 4.8-2.4S9.2 9.6 11.6 9.6s2.4-2.4 4.8-2.4S18.8 9.6 22 9.6" opacity=".5" />
+                    </svg>
+                </span>
+                <span class="hidden sm:inline">MAREA</span>
+            </a>
+
+            <nav class="hidden items-center gap-1 md:flex">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Inicio</NavLink>
+                <a class="nav-link" href="/#capacidades">Capacidades</a>
+                @if (Auth.IsAuthenticated)
+                {
+                    <NavLink class="nav-link" href="profile">Perfil</NavLink>
+                    <button type="button" class="btn btn-ghost btn-sm" @onclick="SignOutAsync">Salir</button>
+                }
+                else
+                {
+                    <NavLink class="nav-link" href="sign-in">Entrar</NavLink>
+                    <a class="btn btn-accent btn-sm" href="/sign-up">Crear cuenta</a>
+                }
+            </nav>
+
+            <button type="button" class="btn btn-ghost btn-sm md:hidden" aria-label="Menú" aria-expanded="@menuOpen" @onclick="() => menuOpen = !menuOpen">
+                @if (menuOpen)
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-5 w-5">
+                        <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-5 w-5">
+                        <path d="M4 7h16M4 12h16M4 17h16" />
+                    </svg>
+                }
+            </button>
+        </div>
+
+        @if (menuOpen)
+        {
+            <nav class="mx-auto w-full max-w-6xl px-5 pb-4 sm:px-8 md:hidden">
+                <div class="glass flex flex-col gap-1 p-3">
+                    <a class="nav-link" href="/" @onclick="CloseMenu">Inicio</a>
+                    <a class="nav-link" href="/#capacidades" @onclick="CloseMenu">Capacidades</a>
+                    @if (Auth.IsAuthenticated)
+                    {
+                        <a class="nav-link" href="/profile" @onclick="CloseMenu">Perfil</a>
+                        <button type="button" class="nav-link text-left" @onclick="SignOutAsync">Cerrar sesión</button>
+                    }
+                    else
+                    {
+                        <a class="nav-link" href="/sign-in" @onclick="CloseMenu">Entrar</a>
+                        <a class="btn btn-accent mt-2" href="/sign-up" @onclick="CloseMenu">Crear cuenta</a>
+                    }
+                </div>
+            </nav>
+        }
+    </header>
+
+    <main class="relative z-10 flex-1">
+        @Body
+    </main>
+
+    <footer class="relative z-10 mt-10 shrink-0 border-t border-white/5">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-sm font-semibold tracking-[0.24em]">MAREA</p>
+                <p class="muted mt-2 max-w-sm text-sm">SPA en Blazor WebAssembly. El fondo, la escena y la paleta se eligen al azar en tu primera visita.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
+                <a class="transition-colors hover:text-ink" href="/">Inicio</a>
+                <a class="transition-colors hover:text-ink" href="/sign-in">Entrar</a>
+                <a class="transition-colors hover:text-ink" href="/sign-up">Crear cuenta</a>
+                <span class="inline-flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full" style="background:var(--accent)"></span>
+                    Escena @SceneLabel
+                </span>
+            </div>
+        </div>
+    </footer>
+</div>
+

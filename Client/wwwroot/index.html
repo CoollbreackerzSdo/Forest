@@ -1,31 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Client</title>
+    <meta name="description" content="Marea · SPA en Blazor WebAssembly con fondo marino en parallax y paleta dinámica." />
+    <meta name="theme-color" content="#030b13" />
+    <title>Marea · Blazor WebAssembly</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
-    <link rel="stylesheet" href="css/app.css" />
-    <!-- If you add any scoped CSS files, uncomment the following to load them
-    <link href="Client.styles.css" rel="stylesheet" /> -->
+    <link rel="stylesheet" href="css/app.css?v=5" />
     <script type="importmap"></script>
 </head>
 
 <body>
-    <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+    <!-- Loading screen. It lives outside #app so it can fade away when Blazor
+         takes over instead of vanishing in a flash (see wwwroot/js/boot.js). -->
+    <div id="boot" class="boot" role="status" aria-live="polite">
+        <span class="sr-only">Cargando Marea…</span>
+
+        <div class="boot-scene" aria-hidden="true">
+            <span class="boot-glow"></span>
+            <svg class="boot-wave boot-wave--far" viewBox="0 0 2880 320" preserveAspectRatio="none">
+                <path
+                    d="M0,190 C160,150 300,220 480,212 C660,204 780,150 960,158 C1140,166 1280,214 1440,190 C1600,150 1740,220 1920,212 C2100,204 2220,150 2400,158 C2580,166 2720,214 2880,190 L2880,320 L0,320 Z" />
+            </svg>
+            <svg class="boot-wave boot-wave--mid" viewBox="0 0 2880 320" preserveAspectRatio="none">
+                <path
+                    d="M0,210 C180,180 340,240 520,232 C700,224 840,168 1020,176 C1200,184 1320,236 1440,210 C1620,180 1780,240 1960,232 C2140,224 2280,168 2460,176 C2640,184 2760,236 2880,210 L2880,320 L0,320 Z" />
+            </svg>
+            <svg class="boot-wave boot-wave--near" viewBox="0 0 2880 320" preserveAspectRatio="none">
+                <path
+                    d="M0,230 C200,190 360,260 560,248 C760,236 880,176 1080,186 C1280,196 1400,258 1440,230 C1640,190 1800,260 2000,248 C2200,236 2320,176 2520,186 C2720,196 2840,258 2880,230 L2880,320 L0,320 Z" />
+            </svg>
+        </div>
+
+        <div class="boot-core">
+            <div class="boot-sonar" aria-hidden="true">
+                <span class="boot-sonar-dot"></span>
+                <span class="boot-sonar-ring"></span>
+                <span class="boot-sonar-ring"></span>
+                <span class="boot-sonar-ring"></span>
+            </div>
+
+            <p class="boot-title">MAREA</p>
+            <span class="boot-rule" aria-hidden="true"></span>
+
+            <p class="boot-sub" aria-hidden="true">
+                <span>Entrando en el océano…</span>
+                <span>Desplegando las velas…</span>
+                <span>Encendiendo las farolas…</span>
+            </p>
+
+            <div class="boot-meter" aria-hidden="true">
+                <div class="boot-meter-track">
+                    <span class="boot-meter-fill"></span>
+                </div>
+                <span class="boot-meter-value"></span>
+            </div>
+        </div>
+
+        <p class="boot-note" aria-hidden="true">Fondo marino · paleta dinámica</p>
     </div>
+
+    <div id="app"></div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        <span class="dismiss">✕</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>

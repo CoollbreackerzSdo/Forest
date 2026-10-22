@@ -1,7 +1,143 @@
 ﻿@page "/"
+@implements IDisposable
+@inject AuthService Auth
+@inject OceanService Ocean
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Marea · Inicio</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- ============================ HERO ============================ -->
+<section class="relative">
+    <div class="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 pt-14 pb-24 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:pt-24 lg:pb-32">
+        <div class="reveal is-visible">
+            <span class="eyebrow">
+                <span class="h-1.5 w-1.5 rounded-full" style="background:var(--accent)"></span>
+                Blazor WebAssembly · Ocean SPA
+            </span>
 
-Welcome to your new app.
+            <h1 class="mt-7 text-[clamp(2.7rem,7.4vw,5.4rem)] font-bold leading-[0.94]">
+                <span class="display">Un océano</span><br />
+                <span class="text-ink/90">de posibilidades</span>
+            </h1>
+
+            <p class="muted mt-7 max-w-xl text-[1.05rem] leading-relaxed">
+                Cada visita abre una escena distinta del fondo marino. El parallax responde al scroll,
+                la paleta de la interfaz se extrae de la imagen que estás viendo y todo vive en una
+                única SPA de Blazor WebAssembly.
+            </p>
+
+            <div class="mt-9 flex flex-wrap items-center gap-3">
+                @if (Auth.IsAuthenticated)
+                {
+                    <a class="btn btn-accent" href="/profile">Ver mi perfil</a>
+                    <a class="btn btn-ghost" href="/#capacidades">Ver capacidades</a>
+                }
+                else
+                {
+                    <a class="btn btn-accent" href="/sign-up">Crear cuenta</a>
+                    <a class="btn btn-ghost" href="/sign-in">Ya tengo cuenta</a>
+                }
+            </div>
+
+            <dl class="mt-14 grid max-w-lg grid-cols-3 gap-6">
+                <div>
+                    <dt class="muted text-xs tracking-[0.18em] uppercase">Escena</dt>
+                    <dd class="mt-1.5 text-2xl font-semibold">@SceneLabel</dd>
+                </div>
+                <div>
+                    <dt class="muted text-xs tracking-[0.18em] uppercase">Paleta</dt>
+                    <dd class="mt-2 flex items-center gap-1.5">
+                        <span class="h-6 w-6 rounded-full border border-white/15" style="background:var(--accent)"></span>
+                        <span class="h-6 w-6 rounded-full border border-white/15" style="background:var(--accent-2)"></span>
+                        <span class="h-6 w-6 rounded-full border border-white/15" style="background:var(--scene-glow)"></span>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="muted text-xs tracking-[0.18em] uppercase">Render</dt>
+                    <dd class="mt-1.5 text-2xl font-semibold">Canvas</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="reveal is-visible relative">
+            <div class="absolute -inset-6 -z-10 rounded-[3rem] opacity-60 blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, var(--scene-glow), transparent 70%)"></div>
+
+            <div class="glass overflow-hidden p-3">
+                <div class="scene-plate relative aspect-video w-full overflow-hidden rounded-[1.5rem]">
+                    <div class="absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-[0.65rem] font-semibold tracking-[0.28em] uppercase" style="color:var(--accent)">Escena activa</span>
+                        <p class="mt-1.5 text-2xl font-bold">@SceneLabel</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-4 px-3 py-4">
+                    <p class="muted text-sm">El fondo y los colores de la web se toman de esta imagen.</p>
+                    <span class="shrink-0 text-sm font-semibold">Recarga para otra escena</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================ CAPACIDADES ============================ -->
+<section id="capacidades" class="mt-28 scroll-mt-28">
+    <div class="mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <div class="reveal max-w-2xl">
+            <span class="eyebrow">Capacidades</span>
+            <h2 class="mt-5 text-4xl font-bold sm:text-5xl">Todo lo que necesitas <span class="display">bajo el agua</span></h2>
+        </div>
+
+        <div class="mt-12 grid gap-5 md:grid-cols-3">
+            <article class="reveal glass lift p-7">
+                <span class="brand-mark mb-6" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                        <path d="M12 2.7l7.5 3.2v5.4c0 4.6-3.1 8.4-7.5 9.6-4.4-1.2-7.5-5-7.5-9.6V5.9z" />
+                        <path d="M9 12l2.2 2.2L15.5 10" />
+                    </svg>
+                </span>
+                <h3 class="text-xl font-semibold">Sesión real</h3>
+                <p class="muted mt-3 text-sm leading-relaxed">Token <span class="font-mono text-xs">JWT</span> emitido por la API, guardado de forma local y reenviado en cada petición.</p>
+            </article>
+
+            <article class="reveal glass lift p-7">
+                <span class="brand-mark mb-6" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                        <rect x="3" y="4" width="18" height="14" rx="3" />
+                        <path d="M7 14.5l2.8-3 2.4 2.2 3.3-4 3.5 4.8" />
+                    </svg>
+                </span>
+                <h3 class="text-xl font-semibold">Perfil con imagen</h3>
+                <p class="muted mt-3 text-sm leading-relaxed">Foto de perfil y banner se envían como <span class="font-mono text-xs">multipart</span> junto al registro.</p>
+            </article>
+
+            <article class="reveal glass lift p-7">
+                <span class="brand-mark mb-6" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                        <path d="M3 17c2.4 0 2.4-2.4 4.8-2.4S10.2 17 12.6 17s2.4-2.4 4.8-2.4S19.8 17 22 17" />
+                        <path d="M3 11c2.4 0 2.4-2.4 4.8-2.4S10.2 11 12.6 11s2.4-2.4 4.8-2.4S19.8 11 22 11" opacity=".55" />
+                    </svg>
+                </span>
+                <h3 class="text-xl font-semibold">Fondo vivo</h3>
+                <p class="muted mt-3 text-sm leading-relaxed">Un canvas dibuja las capas de la escena y las desplaza con el scroll: el efecto parallax es puro scroll.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ============================ CTA ============================ -->
+<section class="mt-28">
+    <div class="mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <div class="glass reveal relative overflow-hidden p-10 sm:p-14">
+            <div class="absolute -right-20 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl" style="background:radial-gradient(circle, var(--accent), transparent 65%)"></div>
+            <div class="relative">
+                <span class="eyebrow">Empieza ahora</span>
+                <h2 class="mt-5 max-w-2xl text-4xl font-bold sm:text-5xl">Crea tu cuenta y <span class="display">sumergente</span></h2>
+                <p class="muted mt-5 max-w-xl leading-relaxed">Registro en dos pasos: valida la contraseña en el cliente y deja que la API haga el resto.</p>
+                <div class="mt-9 flex flex-wrap gap-3">
+                    <a class="btn btn-accent" href="/sign-up">Crear cuenta</a>
+                    <a class="btn btn-ghost" href="/sign-in">Iniciar sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
