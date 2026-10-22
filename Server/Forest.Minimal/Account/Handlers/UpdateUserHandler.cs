@@ -14,7 +14,7 @@ public sealed class UpdateUserHandler(
     public async Task<Result<Profile>> HandlerAsync(UpdateUserQuery request, CancellationToken token)
     {
         var user = context.Users.Where(x => x.Key == request.UserId).SingleOrDefault();
-        if (user is null) return Result.NotFound();
+        if (user is null) return Result.NoContent();
 
         if (!string.IsNullOrWhiteSpace(request.Request.UserName))
             user.UserName = request.Request.UserName;

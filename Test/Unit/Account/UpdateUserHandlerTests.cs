@@ -34,10 +34,10 @@ public sealed class UpdateUserHandlerTests : IDisposable
 
     private async Task<EntityId> IdAsync() => (await _scope.Context.Users.AsNoTracking().SingleAsync()).Key;
 
-    private async Task<Result> SendToUnknownUserAsync(UpdateUserRequest request)
+    private async Task<Result<Profile>> SendToUnknownUserAsync(UpdateUserRequest request)
         => await _handler.HandlerAsync(new UpdateUserQuery(Guid.CreateVersion7(), request), CancellationToken.None);
 
-    private async Task<Result> SendToActualUserAsync(UpdateUserRequest request)
+    private async Task<Result<Profile>> SendToActualUserAsync(UpdateUserRequest request)
         => await _handler.HandlerAsync(new UpdateUserQuery(await IdAsync(), request), CancellationToken.None);
 
     [Fact]
