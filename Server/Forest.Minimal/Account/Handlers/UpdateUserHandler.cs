@@ -1,4 +1,6 @@
 using System.Threading.Channels;
+using Forest.Minimal.Account.Mappers;
+using Forest.Minimal.Account.Models;
 using Forest.Minimal.Common.Handlers;
 using RustfsClient.Abstractions;
 
@@ -7,12 +9,12 @@ namespace Forest.Minimal.Account.Handlers;
 public sealed class UpdateUserHandler(
     ForestContext context,
     IRustfsObjectStorageClient client,
-    [FromKeyedServices(StorageHelper.CleanerChannel)] Channel<string> cleaner) : IRequestHandler<UpdateUserQuery>
+    [FromKeyedServices(StorageHelper.CleanerChannel)] Channel<string> cleaner) : IHandler<UpdateUserQuery, Profile>
 {
-    public async Task<Result> HandlerAsync(UpdateUserQuery request, CancellationToken token)
+    public async Task<Result<Profile>> HandlerAsync(UpdateUserQuery request, CancellationToken token)
     {
         var user = context.Users.Where(x => x.Key == request.UserId).SingleOrDefault();
-        if (user is null) return Result.NoContent();
+        if (user is null) return Result.NotFound();
 
         if (!string.IsNullOrWhiteSpace(request.Request.UserName))
             user.UserName = request.Request.UserName;
@@ -39,7 +41,7 @@ public sealed class UpdateUserHandler(
         _ = Queue(photoId);
         _ = Queue(bannerId);
 
-        return Result.Success();
+        return Result.Success(UserMapper.ToProfile(user));
     }
 
     private Task Queue(string? key)
