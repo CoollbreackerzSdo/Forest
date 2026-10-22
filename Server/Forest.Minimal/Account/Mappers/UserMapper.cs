@@ -28,4 +28,15 @@ public static partial class UserMapper
     [MapperIgnoreSource(nameof(SignUpCommand.FirstName))]
     [MapperIgnoreSource(nameof(SignUpCommand.LastName))]
     public static partial Security ToSecurity(SignUpCommand command);
+    [MapperIgnoreSource(nameof(UserModel.Key))]
+    [MapperIgnoreSource(nameof(UserModel.IsEnable))]
+    [MapperIgnoreSource(nameof(UserModel.Tokens))]
+    [MapperIgnoreSource(nameof(UserModel.Register))]
+    [MapProperty(nameof(UserModel.UserName), nameof(Profile.UserName))]
+    [MapProperty(nameof(UserModel.Details.FirstName), nameof(Profile.FirstName))]
+    [MapProperty(nameof(UserModel.Details.LastName), nameof(Profile.LastName))]
+    [MapProperty(nameof(UserModel.Security.Email), nameof(Profile.Email))]
+    [MapProperty(nameof(UserModel.Details.PhotoId), nameof(Profile.PhotoId))]
+    [MapProperty(nameof(UserModel.Details.BannerId), nameof(Profile.BannerId))]
+    public static partial Profile ToProfile(UserModel model);
 }
