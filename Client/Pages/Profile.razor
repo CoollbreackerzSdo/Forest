@@ -34,10 +34,6 @@ else
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                         Sesión activa
                     </span>
-
-                    <span class="absolute right-5 top-5 hidden rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[0.68rem] font-medium tracking-wide text-white/85 backdrop-blur-md sm:inline-block">
-                        Escena @SceneLabel
-                    </span>
                 </div>
 
                 <!-- avatar + identidad -->
@@ -61,7 +57,7 @@ else
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3 pb-1">
-                            <button type="button" class="btn btn-ghost btn-sm" @onclick="ToggleEditor">
+                            <button type="button" class="btn btn-ghost btn-sm cursor-pointer" @onclick="ToggleEditor">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
                                     <path d="M12 20h9" />
                                     <path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z" />
@@ -198,7 +194,7 @@ else
                 <nav class="flex gap-6 border-b border-white/10" aria-label="Secciones del perfil">
                     @foreach (var item in Tabs)
                     {
-                        <button type="button" class="profile-tab @(item == tab ? "is-active" : "")" @onclick="() => tab = item">@item</button>
+                        <button type="button" class="cursor-pointer profile-tab @(item == tab ? "is-active" : "")" @onclick="() => tab = item">@item</button>
                     }
                 </nav>
 
@@ -267,7 +263,7 @@ else
 
                                 <h3 class="text-sm font-semibold">Zona de riesgo</h3>
                                 <p class="muted mt-1.5 text-sm">Cerrar sesión revoca el token en el servidor y borra la cookie del navegador.</p>
-                                <button type="button" class="btn btn-ghost mt-4" @onclick="Logout">Cerrar sesión</button>
+                                <button type="button" class="btn btn-ghost mt-4 cursor-pointer" @onclick="Logout">Cerrar sesión</button>
                             </article>
                             break;
                     }
@@ -303,11 +299,11 @@ else
 
                 <div class="glass-soft p-6">
                     <h3 class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Acciones</h3>
-                    <button type="button" class="btn btn-accent btn-block mt-4" @onclick="ToggleEditor">
+                    <button type="button" class="btn btn-accent btn-block mt-4 cursor-pointer" @onclick="ToggleEditor">
                         Editar perfil
                     </button>
-                    <a class="btn btn-ghost btn-block mt-3" href="/">Volver al inicio</a>
-                    <button type="button" class="btn btn-ghost btn-block mt-3" @onclick="Logout">Cerrar sesión</button>
+                    <a class="btn btn-ghost btn-block mt-3 cursor-pointer" href="/">Volver al inicio</a>
+                    <button type="button" class="btn btn-ghost btn-block mt-3 cursor-pointer" @onclick="Logout">Cerrar sesión</button>
                 </div>
 
                 <div class="glass-soft p-6">
