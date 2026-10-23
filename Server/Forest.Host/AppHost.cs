@@ -6,7 +6,6 @@ var bearerKey = builder.AddParameter("BearerKey", true);
 var accessKey = builder.AddParameter("AccessKey", true);
 var secretKey = builder.AddParameter("SecretKey", true);
 
-
 var database = builder.AddPostgres("forest-database")
     .WithImageTag("18.6-alpine3.24")
     .WithVolume("forest", "/var/lib/postgres")
