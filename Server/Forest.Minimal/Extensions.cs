@@ -185,6 +185,7 @@ public static partial class Extensions
     }
     extension(ValidationConfiguration configuration)
     {
-        public bool ValidateFile(IFormFile file) => configuration.ValidImgFormat.Contains(Path.GetExtension(file.FileName));
+        public bool IsValidImg(IFormFile file) => configuration.ValidImgFormat.Any(x => x.Equals(Path.GetExtension(file.FileName), StringComparison.InvariantCultureIgnoreCase));
+        public bool IsValidVideo(IFormFile file) => configuration.ValidVideoFormat.Any(x => x.Equals(Path.GetExtension(file.FileName), StringComparison.InvariantCultureIgnoreCase));
     }
 }

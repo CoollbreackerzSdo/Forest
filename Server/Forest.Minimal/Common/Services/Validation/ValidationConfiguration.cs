@@ -15,6 +15,4 @@ public sealed class ValidationConfiguration
     }
     public IReadOnlyCollection<string> ValidVideoFormat { get; init; } = [];
     public IReadOnlyCollection<string> ValidImgFormat { get; init; } = [];
-    public bool IsValidVideo(IFormFile file) => ValidVideoFormat.Contains(Path.GetExtension(file.FileName).ToLowerInvariant());
-    public bool IsValidImg(IFormFile file) => ValidImgFormat.Contains(Path.GetExtension(file.FileName).ToLowerInvariant());
 }
