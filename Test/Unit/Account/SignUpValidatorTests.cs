@@ -87,7 +87,7 @@ public sealed class SignUpValidatorTests
     [Fact]
     public void Validate_DeberiaRechazarArchivosQueSuperanElTamanoMaximo()
     {
-        var command = Command() with { Banner = TestData.File("portada.png", length: (int)TestData.Validation.ValidFileMBSize + 1) };
+        var command = Command() with { Banner = TestData.File("portada.png", length: (int)TestData.Validation.ValidImgFileMBSize + 1) };
 
         var result = _validator.Validate(command);
 

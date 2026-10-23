@@ -21,7 +21,7 @@ public static class TestData
     public static ValidationConfiguration Validation { get; } = new()
     {
         PasswordLength = 8,
-        ValidFileMBSize = 1,
+        ValidImgFileMBSize = 1,
         FileTypes = [".png", ".jpg", ".jpeg"]
     };
 

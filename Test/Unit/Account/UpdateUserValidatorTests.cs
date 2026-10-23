@@ -52,7 +52,7 @@ public sealed class UpdateUserValidatorTests
     [Fact]
     public void Validate_DeberiaRechazarArchivosQueSuperanElTamanoMaximo()
     {
-        var result = _validator.Validate(new UpdateUserRequest { Photo = TestData.File("foto.png", length: (int)TestData.Validation.ValidFileMBSize + 1) });
+        var result = _validator.Validate(new UpdateUserRequest { Photo = TestData.File("foto.png", length: (int)TestData.Validation.ValidImgFileMBSize + 1) });
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, x => x.PropertyName == nameof(UpdateUserRequest.Photo));

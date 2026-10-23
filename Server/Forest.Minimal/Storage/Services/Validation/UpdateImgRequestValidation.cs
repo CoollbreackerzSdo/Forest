@@ -11,7 +11,7 @@ public sealed class UpdateImgRequestValidation : AbstractValidator<UploadImgRequ
     {
         RuleFor(x => x.ImgId).NotEmpty();
 
-        var maxFileSize = configuration.CurrentValue.ValidFileMBSize;
+        var maxFileSize = configuration.CurrentValue.ValidImgFileMBSize;
 
         RuleFor(x => x.NewImg).Custom((value, context) =>
         {

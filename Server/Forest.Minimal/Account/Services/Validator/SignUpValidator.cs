@@ -34,14 +34,14 @@ public sealed class SignUpValidator : AbstractValidator<SignUpCommand>
         RuleFor(x => x.Banner).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidFileMBSize)
+            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidImgFileMBSize)
                 context.AddFailure("Archivo no valido");
         });
 
         RuleFor(x => x.Photo).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidFileMBSize)
+            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidImgFileMBSize)
                 context.AddFailure("Archivo no valido");
         });
     }
