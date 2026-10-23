@@ -11,7 +11,7 @@ namespace Forest.Test.Support;
 /// </summary>
 public static class TestData
 {
-    /// <summary>Clave simetrica valida para HS256 (>= 256 bits).</summary>
+    /// <summary>Clave simétrica valida para HS256 (>= 256 bits).</summary>
     public const string BearerKey = "forest-test-bearer-key-0123456789";
     public const string Audience = "com.coollbreackerz";
     public const string Issuer = "Ralber";
@@ -21,8 +21,8 @@ public static class TestData
     public static ValidationConfiguration Validation { get; } = new()
     {
         PasswordLength = 8,
-        ValidImgFileMBSize = 1,
-        FileTypes = [".png", ".jpg", ".jpeg"]
+        ValidImgMBSize = 1,
+        ValidImgFormat = [".png", ".jpg", ".jpeg"]
     };
 
     public static BearerConfiguration BearerConfiguration { get; } = new()

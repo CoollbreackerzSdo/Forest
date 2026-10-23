@@ -30,14 +30,14 @@ public sealed class UpdateUserValidator : AbstractValidator<UpdateUserRequest>
         RuleFor(x => x.Banner).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidImgFileMBSize)
+            if (!configuration.CurrentValue.IsValidImg(value) || value.Length > configuration.CurrentValue.ValidImgMBSize)
                 context.AddFailure("Archivo no valido");
         });
 
         RuleFor(x => x.Photo).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > configuration.CurrentValue.ValidImgFileMBSize)
+            if (!configuration.CurrentValue.IsValidImg(value) || value.Length > configuration.CurrentValue.ValidImgMBSize)
                 context.AddFailure("Archivo no valido");
         });
     }

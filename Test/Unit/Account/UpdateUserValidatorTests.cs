@@ -10,7 +10,7 @@ public sealed class UpdateUserValidatorTests
     private readonly UpdateUserValidator _validator = new(new StaticOptionsMonitor<ValidationConfiguration>(TestData.Validation));
 
     [Fact]
-    public void Validate_DeberiaAceptarUnaPeticionVacia()
+    public void Validate_DeberiaAceptarUnaPeticiónVacía()
     {
         var result = _validator.Validate(new UpdateUserRequest());
 
@@ -50,9 +50,9 @@ public sealed class UpdateUserValidatorTests
     }
 
     [Fact]
-    public void Validate_DeberiaRechazarArchivosQueSuperanElTamanoMaximo()
+    public void Validate_DeberiaRechazarArchivosQueSuperanElTamañoMáximo()
     {
-        var result = _validator.Validate(new UpdateUserRequest { Photo = TestData.File("foto.png", length: (int)TestData.Validation.ValidImgFileMBSize + 1) });
+        var result = _validator.Validate(new UpdateUserRequest { Photo = TestData.File("foto.png", length: (int)TestData.Validation.ValidImgMBSize + 1) });
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, x => x.PropertyName == nameof(UpdateUserRequest.Photo));

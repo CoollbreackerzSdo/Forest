@@ -11,12 +11,12 @@ public sealed class UpdateImgRequestValidation : AbstractValidator<UploadImgRequ
     {
         RuleFor(x => x.ImgId).NotEmpty();
 
-        var maxFileSize = configuration.CurrentValue.ValidImgFileMBSize;
+        var maxFileSize = configuration.CurrentValue.ValidImgMBSize;
 
         RuleFor(x => x.NewImg).Custom((value, context) =>
         {
             if (value is null) return;
-            if (!configuration.CurrentValue.ValidateFile(value) || value.Length > maxFileSize)
+            if (!configuration.CurrentValue.IsValidImg(value) || value.Length > maxFileSize)
                 context.AddFailure("Archivo no valido");
         });
     }
