@@ -35,7 +35,7 @@ public sealed class ImageCleanerService(
     {
         using var timer = new PeriodicTimer(_configuration.Interval);
 
-        while (await timer.WaitForNextTickAsync(token))
+        do
         {
             try
             {
@@ -50,7 +50,7 @@ public sealed class ImageCleanerService(
             {
                 logger.LogError(exception, "No se pudo completar el barrido de imágenes huérfanas.");
             }
-        }
+        } while (await timer.WaitForNextTickAsync(token));
     }
 
     public async Task<IReadOnlyList<string>> FindOrphansAsync(CancellationToken token)
