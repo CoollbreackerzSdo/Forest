@@ -99,7 +99,8 @@ public static partial class Extensions
         }
         public IHostApplicationBuilder AddContext()
         {
-            builder.AddNpgsqlDbContext<ForestContext>("forest-database", configureDbContextOptions: op => op.UseExceptionProcessor());
+            builder.Configuration.AddEnvironmentVariables("POSTGRES_CONNECTION");
+            builder.AddNpgsqlDbContext<ForestContext>("forest-database", op => op.ConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION"), configureDbContextOptions: op => op.UseExceptionProcessor());
             return builder;
         }
         public IHostApplicationBuilder AddObjectStorage()

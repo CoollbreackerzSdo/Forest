@@ -1,0 +1,100 @@
+services:
+  db:
+    image: "docker.io/library/postgres:18.6-alpine3.24"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    expose:
+      - "5432"
+    volumes:
+      - "dbdata:/var/lib/postgres"
+    networks:
+      forest:
+          ipv4_address: 172.30.0.2
+
+  cache:
+    image: "docker.io/library/redis:latest"
+    command:
+      - "-c"
+      - "redis-server --requirepass $$REDIS_PASSWORD"
+    entrypoint:
+      - "/bin/sh"
+    environment:
+      REDIS_PASSWORD: "${CACHE_PASSWORD}"
+    expose:
+      - "6379"
+    volumes:
+      - "cachedata:/data"
+    networks:
+      forest:
+          ipv4_address: 172.30.0.3
+
+  s3:
+    image: "docker.io/rustfs/rustfs:latest"
+    command:
+      - "/data"
+    environment:
+      RUSTFS_ACCESS_KEY: "${ACCESSKEY}"
+      RUSTFS_SECRET_KEY: "${SECRETKEY}"
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+    expose:
+      - "9000"
+      - "9001"
+    volumes:
+      - "s3data:/data"
+    networks:
+      forest:
+          ipv4_address: 172.30.0.4
+
+  api:
+    image: "forest:0.0.1-alpine-amd64"
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Server/Forest.Minimal/Dockerfile
+    environment:
+      # Runtime
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      BEARER_KEY: "${BEARERKEY}"
+
+      # DB
+      POSTGRES_CONNECTION: "Host=db;Port=5432;Username=postgres;Password=${DB_PASSWORD}"
+
+      # Cache
+      REDIS_CONNECTION: "cache:6379,password=${CACHE_PASSWORD}"
+
+      # S3
+      RUSTFS_ACCESS_KEY: "${ACCESSKEY}"
+      RUSTFS_SECRET_KEY: "${SECRETKEY}"
+      RUSTFS_REGION: "us-east-1"
+      S3_CONNECTION_D: "http://s3:9000"
+      S3_CONNECTION_N: "http://s3:9001"
+
+      RUSTFS_SERVICE_URL: "http://s3:9000"
+    ports:
+      - 7010:7010
+    depends_on:
+      cache:
+        condition: "service_started"
+      db:
+        condition: "service_started"
+      s3:
+        condition: "service_started"
+    networks:
+      forest:
+        ipv4_address: 172.30.0.10
+
+networks:
+  forest:
+    ipam:
+      config:
+        - subnet: "172.30.0.0/24"
+          gateway: "172.30.0.1"
+
+volumes:
+  dbdata:
+  cachedata:
+  s3data:

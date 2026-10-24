@@ -2,6 +2,8 @@ using Forest.Minimal.Common.OpenApi;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables("REDIS_CONNECTION");
+
 builder.Services.AddOpenApi(op => op.AddDocumentTransformer<BearerTransformer>());
 
 builder.AddLogs()
@@ -12,7 +14,7 @@ builder.AddLogs()
     .AddImageCleaner()
     .AddContext()
     .AddAuth()
-    .AddRedisDistributedCache("forest-cache");
+    .AddRedisDistributedCache("forest-cache", op => op.ConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION"));
 
 builder.Services.AddMiddlewares()
     .AddEndpoints()
