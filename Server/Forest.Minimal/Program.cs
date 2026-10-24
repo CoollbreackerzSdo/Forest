@@ -11,7 +11,8 @@ builder.AddLogs()
     .AddObjectStorage()
     .AddImageCleaner()
     .AddContext()
-    .AddAuth();
+    .AddAuth()
+    .AddRedisDistributedCache("forest-cache");
 
 builder.Services.AddMiddlewares()
     .AddEndpoints()

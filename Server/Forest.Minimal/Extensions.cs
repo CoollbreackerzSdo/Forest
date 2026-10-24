@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using EntityFramework.Exceptions.PostgreSQL;
 using FluentValidation;
@@ -17,6 +18,7 @@ using Forest.Minimal.Storage.Handlers;
 using Forest.Minimal.Storage.Services;
 using Forest.Minimal.Storage.Services.Validation;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using RustfsClient;
@@ -187,5 +189,23 @@ public static partial class Extensions
     {
         public bool IsValidImg(IFormFile file) => configuration.ValidImgFormat.Any(x => x.Equals(Path.GetExtension(file.FileName), StringComparison.InvariantCultureIgnoreCase));
         public bool IsValidVideo(IFormFile file) => configuration.ValidVideoFormat.Any(x => x.Equals(Path.GetExtension(file.FileName), StringComparison.InvariantCultureIgnoreCase));
+    }
+    extension(IDistributedCache cache)
+    {
+        public async Task SetAsync<T>(string key, T value, TimeSpan expRelativeToNow, CancellationToken token)
+        {
+            await cache.SetAsync(key, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value)), new()
+            {
+                AbsoluteExpirationRelativeToNow = expRelativeToNow
+            }, token);
+        }
+        public bool TryGet<T>(string key, out T value)
+        {
+            value = default!;
+            var hashValue = cache.GetString(key);
+            if (string.IsNullOrWhiteSpace(hashValue)) return false;
+            value = JsonSerializer.Deserialize<T>(hashValue)!;
+            return true;
+        }
     }
 }
