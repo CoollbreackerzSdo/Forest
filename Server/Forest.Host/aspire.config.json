@@ -3,7 +3,7 @@
     "path": "Forest.Host.csproj"
   },
   "sdk": {
-    "version": "17.0.0-preview.1.26523.14"
+    "version": "17.0.0-preview.1.26529.6"
   },
   "channel": "daily"
 }

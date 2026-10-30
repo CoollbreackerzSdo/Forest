@@ -1,12 +1,12 @@
-<Project Sdk="Aspire.AppHost.Sdk/17.0.0-preview.1.26523.14">
+<Project Sdk="Aspire.AppHost.Sdk/17.0.0-preview.1.26529.6">
 
   <ItemGroup>
     <ProjectReference Include="..\Forest.Minimal\Forest.Minimal.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="17.0.0-preview.1.26523.14" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="17.0.0-preview.1.26523.14" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="17.0.0-preview.1.26529.6" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="17.0.0-preview.1.26529.6" />
     <PackageReference Include="MessagePack" Version="3.1.12" />
   </ItemGroup>
 
